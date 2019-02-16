@@ -74,13 +74,16 @@ class EntitySet (object):
         self._entityset = []
 
     def entity_keys (self):
+        result = []
+        for entity in self._entityset:
+            result.append(entity.primary_key().values()[0])
 
-        return self._attributes_key
+        return result
 
     def create_entity (self,attributes):
 
         for attName in attributes.keys():
-          if attName in self.entity_keys():
+          if attName in self._attributes_key:
             for entity in self._entityset:
               if attributes.get(attName) == entity.attribute(attName):
                 raise Exception("Duplicate key")
@@ -90,10 +93,10 @@ class EntitySet (object):
 
     def read_entity (self,key):
 
-        for i in self._entityset:
-          for j in i.primary_key():
-            if j == key:
-              return i
+        for entity in self._entityset:
+          for entKey in entity.primary_key().values():
+            if entKey == key:
+              return entity
 
         raise Exception('There is no entity corresponding to that key.')
             
@@ -124,8 +127,8 @@ class Entity (object):
         return self._attributes.get(name)
 
     def primary_key (self):
-
-        return self._attributes_key
+        
+        return {key: self._attributes[key] for key in self._attributes_key}
 
 
 class RelationshipSet (object):
@@ -387,8 +390,12 @@ def sample_relationships_model ():
 
 
 def show_title_books_more_500_pages ():
+      books = sample_entities_model()
+      for book in books.read_entity_set("Books")._entityset:
+          if book.attribute("numberPages")>500:
+            print(book.attribute("title"))
 
-    pass
+    
 
 
 def show_title_books_by_barbara ():
@@ -406,7 +413,8 @@ def show_title_books_more_one_author ():
     pass
 
      
-    
+show_title_books_more_500_pages ()
+
 def tests (): 
     
     print("----------------------------------------")
