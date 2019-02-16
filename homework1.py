@@ -50,7 +50,7 @@ class ERModel (object):
 
         for entity_set in self._ermodel:
           if name == entity_set[0]:
-            return entity_set
+            return entity_set[1]
 
     def relationship_sets (self):
 
@@ -79,20 +79,21 @@ class EntitySet (object):
 
     def create_entity (self,attributes):
 
-        for i in attributes.keys():
-          if i in self.entity_keys():
-            for value in attributes.values():
-              if attributes[i] == value:
+        for attName in attributes.keys():
+          if attName in self.entity_keys():
+            for entity in self._entityset:
+              if attributes.get(attName) == entity.attribute(attName):
                 raise Exception("Duplicate key")
-        
+
         temp = Entity(attributes, self._attributes_key)
         self._entityset.append(temp)
 
     def read_entity (self,key):
 
         for i in self._entityset:
-          if i.primary_key() == key:
-            return i
+          for j in i.primary_key():
+            if j == key:
+              return i
 
         raise Exception('There is no entity corresponding to that key.')
             
@@ -420,3 +421,7 @@ def tests ():
     print("----------------------------------------")
     show_title_books_more_one_author()
 
+c = sample_entities_model()
+
+for pk in c.read_entity_set("Persons").entity_keys():
+  print(c.read_entity_set("Persons").read_entity(pk))
