@@ -4,9 +4,9 @@
 #
 # Due: Sun 2/17/19 23h59.
 # 
-# Name: 
+# Name: Prava and Athmika
 # 
-# Email:
+# Email: prava@students.olin.edu and athmika@students.olin.edu
 # 
 # Remarks, if any:
 #
@@ -30,19 +30,27 @@ class ERModel (object):
 
     def __init__ (self):
 
-        pass
+        self._ermodel = []
 
     def entity_sets (self):
 
-        pass
+        return [i[0] for i in self._ermodel]
 
     def create_entity_set (self,name,attributes,attributes_key):
 
-        pass
+        if name in self.entity_sets():
+          raise Exception ("Duplicate set name")
+
+        self._ermodel.append([name, EntitySet(attributes,attributes_key)])
 
     def read_entity_set (self,name):
 
-        pass
+        if name not in self.entity_sets():
+          raise Exception('The entity set by the given name does not exist.')
+
+        for entity_set in self._ermodel:
+          if name == entity_set[0]:
+            return entity_set
 
     def relationship_sets (self):
 
@@ -61,30 +69,49 @@ class EntitySet (object):
 
     def __init__ (self,attributes,attributes_key):
 
-        pass
+        self._attributes = attributes
+        self._attributes_key = attributes_key
+        self._entityset = []
 
     def entity_keys (self):
 
-        pass
+        return self._attributes_key
 
     def create_entity (self,attributes):
 
-        pass
+        for i in attributes.keys():
+          if i in self.entity_keys():
+            for value in attributes.values():
+              if attributes[i] == value:
+                raise Exception("Duplicate key")
+        
+        temp = Entity(attributes, self._attributes_key)
+        self._entityset.append(temp)
 
     def read_entity (self,key):
 
-        pass
+        for i in self._entityset:
+          if i.primary_key() == key:
+            return i
+
+        raise Exception('There is no entity corresponding to that key.')
             
     def delete_entity (self,key):
 
-        pass
-    
+        for i in range(len(self._entityset)):
+          if _entityset[i] == key:
+            del _entityset[i]
+            return
+
+        raise Exception('There is no entity corresponding to that key.')
+
 
 class Entity (object):
 
     def __init__ (self,attributes,attributes_key):
         
         self._attributes = attributes
+        self._attributes_key = attributes_key
 
     def __str__ (self):
         
@@ -93,12 +120,12 @@ class Entity (object):
 
     def attribute (self,name):
         
-        pass
+        return self._attributes.get(name)
 
     def primary_key (self):
 
-        pass
-    
+        return self._attributes_key
+
 
 class RelationshipSet (object):
 
