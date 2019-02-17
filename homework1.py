@@ -132,7 +132,8 @@ class RelationshipSet (object):
 
     def __init__ (self,roles,attributes):
 
-        pass
+        self._roles = roles
+        self._attributes = attributes
     
     def relationship_keys (self):
 
