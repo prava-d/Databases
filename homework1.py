@@ -46,12 +46,12 @@ class ERModel (object):
 
     def read_entity_set (self,name):
 
-        if name not in self.entity_sets():
-          raise Exception('The entity set by the given name does not exist.')
-
         for entity_set in self._emodel:
-          if name == entity_set[0]:
-            return entity_set[1]
+            if name == entity_set[0]:
+                return entity_set[1]
+
+        raise Exception('The entity set by the given name does not exist.')
+
 
     def relationship_sets (self):
 
@@ -59,7 +59,7 @@ class ERModel (object):
 
         # return list((*temp))
 
-        [list(i[1].relationship_keys() for i in self._rmodel)]
+        return [list(i[1].relationship_keys() for i in self._rmodel)]
 
     def create_relationship_set (self,name,roles,attributes=[]):
 
@@ -86,10 +86,13 @@ class EntitySet (object):
         self._attributes_key = attributes_key
         self._entityset = []
 
+    def get_entity_set (self):
+    	return self._entityset
+
     def entity_keys (self):
         result = []
         for entity in self._entityset:
-            result.append(entity.primary_key().values()[0])
+            result.append(list(entity.primary_key().values())[0])
 
         return result
 
@@ -107,8 +110,8 @@ class EntitySet (object):
     def read_entity (self,key):
 
         for entity in self._entityset:
-          for entKey in entity.primary_key().values():
-            if entKey == key:
+          #for entKey in entity.primary_key().values():
+            if entity.primary_key() == key:
               return entity
 
         raise Exception('There is no entity corresponding to that key.')
@@ -185,23 +188,28 @@ class RelationshipSet (object):
         raise Exception ('The relationship with that primary key does not exist')
 
 
-book = Entity({ "title": "A Distant Mirror",
-                          "numberPages": 677,
-                          "year": 1972,
-                          "isbn": "0345349571" }, ["isbn"])
-author = Entity({"firstName": "Neil",
-                           "lastName": "Gaiman",
-                           "birthYear": 1960 }, ["lastName"])
-role = {"book": "Books", "author": "Persons"}
-x = RelationshipSet(role, ["date"])
-x.create_relationship({"book":{"isbn": "03453"}, "author": {"lastName": "Tuchman"}}, {"date": "911"})
-print(x.relationship_keys())
-x.create_relationship({"book":{"isbn": "76431"}, "author": {"lastName": "Gaiman"}}, {"date": "112"})
+# book = Entity({ "title": "A Distant Mirror",
+#                           "numberPages": 677,
+#                           "year": 1972,
+#                           "isbn": "0345349571" }, ["isbn"])
+# author = Entity({"firstName": "Neil",
+#                            "lastName": "Gaiman",
+#                            "birthYear": 1960 }, ["lastName"])
+# role = {"book": "Books", "author": "Persons"}
+# x = RelationshipSet(role, ["date"])
+# x.create_relationship({"book":{"isbn": "03453"}, "author": {"lastName": "Tuchman"}}, {"date": "911"})
+# print(x.relationship_keys())
+# x.create_relationship({"book":{"isbn": "76431"}, "author": {"lastName": "Gaiman"}}, {"date": "112"})
 # print(x._relationshipset)
-print(x.relationship_keys())
+# print(x.relationship_keys())
 # print(x.read_relationship({"isbn": "03453"}))
-x.delete_relationship({"isbn": "03453"})
-print(x.relationship_keys())
+# x.delete_relationship({"isbn": "03453"})
+# print(x.relationship_keys())
+
+t = ERModel()
+t.create_entity_set("Test",["a","b","c"],["a","b"])
+t.read_entity_set("Test").create_entity({"a":100,"b":200,"c":300})
+print(t.read_entity_set("Test").read_entity({"a":100,"b":200}))
 
 
 
@@ -446,7 +454,7 @@ def sample_relationships_model ():
 
 def show_title_books_more_500_pages ():
       books = sample_entities_model()
-      for book in books.read_entity_set("Books")._entityset:
+      for book in books.read_entity_set("Books").get_entity_set():
           if book.attribute("numberPages")>500:
             print(book.attribute("title"))
 
@@ -459,7 +467,7 @@ def show_title_books_by_barbara ():
     	if relation.get("author").get("lastName") == "Tuchman":
     		temp.append(relation.get("author").get("isbn"))
 
-    for book in books.read_entity_set("Books")._entityset:
+    for book in books.read_entity_set("Books").get_entity_set():
     	if book.attribute("isbn") in temp:
     		print(book.attribute("title"))
 
@@ -475,7 +483,7 @@ def show_name_authors_more_one_book ():
 		else:
 			temp.append(relation.get("author").get("lastName"))
 
-	for book in books.read_entity_set("Books")._entityset:
+	for book in books.read_entity_set("Books").get_entity_set():
 		if book.attribute("isbn") in authors:
 			print(book.attribute("title"))
 
@@ -491,12 +499,12 @@ def show_title_books_more_one_author ():
 		else:
 			temp.append(relation.get("author").get("isbn"))
 
-	for book in books.read_entity_set("Books")._entityset:
+	for book in books.read_entity_set("Books").get_entity_set():
 		if book.attribute("isbn") in authors:
 			print(book.attribute("title"))
 
      
-# show_title_books_more_500_pages ()
+show_title_books_more_500_pages ()
 #show_title_books_by_barbara ()
 
 def tests (): 
