@@ -55,9 +55,11 @@ class ERModel (object):
 
     def relationship_sets (self):
 
-        temp = [i[1].relationship_keys() for i in self._rmodel]
+        # temp = [i[1].relationship_keys() for i in self._rmodel]
 
-        return list(zip(*temp))
+        # return list((*temp))
+
+        [list(i[1].relationship_keys() for i in self._rmodel)]
 
     def create_relationship_set (self,name,roles,attributes=[]):
 
@@ -152,35 +154,55 @@ class RelationshipSet (object):
     
     def relationship_keys (self):
 
-        temp =((i[0].values()) for i in self._relationshipset)
-
-        return list(zip(*temp))
+        return [list(i[0].values()) for i in self._relationshipset]
 
     def create_relationship (self,role_keys,attributes={}):
 
         for key, value in role_keys.items():
-        	if value in self.relationship_keys():
-        		raise Exception ('The relationship with that primary key already exists')
+            if value in self.relationship_keys():
+                raise Exception ('The relationship with that primary key already exists')
 
         self._relationshipset.append([role_keys, attributes])
 
     def read_relationship (self,pkey):
 
-        for i in self._relationshipset:
-        	if pkey in i[0].values():
-        		return i
+        for relationship in self._relationshipset:
+            for key, value in relationship[0].items():
+                if pkey == value:
+                	return relationship
 
         raise Exception ('The relationship with that primary key does not exist')
 
-            
+
     def delete_relationship (self,pkey):
 
         for i in range(len(self._relationshipset)):
-          if pkey in self._relationshipset[i].values:
-            del self._relationshipset[i]
-            return
+        	for key, value in self._relationshipset[i][0].items():
+        		if pkey == value:
+        			del self._relationshipset[i]
+        			return
 
         raise Exception ('The relationship with that primary key does not exist')
+
+
+book = Entity({ "title": "A Distant Mirror",
+                          "numberPages": 677,
+                          "year": 1972,
+                          "isbn": "0345349571" }, ["isbn"])
+author = Entity({"firstName": "Neil",
+                           "lastName": "Gaiman",
+                           "birthYear": 1960 }, ["lastName"])
+role = {"book": "Books", "author": "Persons"}
+x = RelationshipSet(role, ["date"])
+x.create_relationship({"book":{"isbn": "03453"}, "author": {"lastName": "Tuchman"}}, {"date": "911"})
+print(x.relationship_keys())
+x.create_relationship({"book":{"isbn": "76431"}, "author": {"lastName": "Gaiman"}}, {"date": "112"})
+# print(x._relationshipset)
+print(x.relationship_keys())
+# print(x.read_relationship({"isbn": "03453"}))
+x.delete_relationship({"isbn": "03453"})
+print(x.relationship_keys())
+
 
 
 class Relationship (object):
@@ -203,13 +225,13 @@ class Relationship (object):
 
     def role_key (self,role):
 
-        return self._role_keys.get(name)
+        return self._role_keys.get(role)
     
     def primary_key (self):
 
         return self._role_keys
     
-                     
+
 
 def sample_entities_model ():
 
