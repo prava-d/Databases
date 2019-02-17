@@ -470,69 +470,71 @@ def sample_relationships_model ():
 
 
 def show_title_books_more_500_pages ():
-      books = sample_entities_model()
-      for book in books.read_entity_set("Books").get_entity_set():
+      collection = sample_entities_model()
+      for book in collection.read_entity_set("Books").get_entity_set():
           if book.attribute("numberPages")>500:
             print(book.attribute("title"))
 
 
 def show_title_books_by_barbara ():
     relations = sample_relationships_model()
-    books = sample_entities_model()
+    lastnames = []
+
+    collection = sample_entities_model()
+    print(collection.read_entity_set("Persons"))
+    personsEntitySet = collection.read_entity_set("Persons").get_entity_set()
+    for person in personsEntitySet:
+      if person.attribute("firstName") == "Barbara":
+         lastnames.append(person.attribute("lastName"))
+
     temp = []
-    # print(relations.read_relationship_set("AuthoredBy").relationship_keys())
     for relation in relations.read_relationship_set("AuthoredBy").relationship_keys():
-    	#for key, value in relation.items():
-    	#	print(value)
-        if relation.get('author').get('lastName') == 'Tuchman':
+        if relation.get('author').get('lastName') in lastnames:
         	temp.append(relation.get('book').get('isbn'))
 
-
-    # for relation in relations.read_relationship_set("AuthoredBy"):
-    # 	if relation.get("author").get("lastName") == "Tuchman":
-    # 		temp.append(relation.get("author").get("isbn"))
-
-    print(temp)
-
-    for book in books.read_entity_set("Books").get_entity_set():
+    for book in collection.read_entity_set("Books").get_entity_set():
     	if book.attribute("isbn") in temp:
     		print(book.attribute("title"))
 
 
 def show_name_authors_more_one_book ():
-	relations = sample_relationships_model()
-	books = sample_entities_model()
-	temp = []
-	authors = []
-	for relation in relations.read_relationship_set("AuthoredBy"):
-		if relation.get("author").get("lastName") in temp:
-			authors.append(relation.get("author").get("isbn"))
-		else:
-			temp.append(relation.get("author").get("lastName"))
+  relations = sample_relationships_model()
+  collection = sample_entities_model()
+  temp = []
+  authors = []
 
-	for book in books.read_entity_set("Books").get_entity_set():
-		if book.attribute("isbn") in authors:
-			print(book.attribute("title"))
+
+  for relation in relations.read_relationship_set("AuthoredBy").relationship_keys():
+    if relation.get("author").get("lastName") in temp and relation.get("author").get("lastName") not in authors:
+      authors.append(relation.get('author').get('lastName'))
+    else:
+      temp.append(relation.get('author').get('lastName'))
+
+  for person in collection.read_entity_set("Persons").get_entity_set():
+    if person.attribute("lastName") in authors:
+      print(person.attribute("firstName") + " " + person.attribute("lastName"))
 
                 
 def show_title_books_more_one_author ():
 	relations = sample_relationships_model()
-	books = sample_entities_model()
+	collection = sample_entities_model()
 	temp = []
 	books = []
-	for relation in relations.read_relationship_set("AuthoredBy"):
-		if relation.get("author").get("isbn") in temp:
-			authors.append(relation.get("author").get("isbn"))
+	for relation in relations.read_relationship_set("AuthoredBy").relationship_keys():
+		if relation.get("book").get("isbn") in temp and relation.get("book").get("isbn") not in books:
+			books.append(relation.get("book").get("isbn"))
 		else:
-			temp.append(relation.get("author").get("isbn"))
+			temp.append(relation.get("book").get("isbn"))
 
-	for book in books.read_entity_set("Books").get_entity_set():
-		if book.attribute("isbn") in authors:
+	for book in collection.read_entity_set("Books").get_entity_set():
+		if book.attribute("isbn") in books:
 			print(book.attribute("title"))
 
      
 # show_title_books_more_500_pages ()
-show_title_books_by_barbara ()
+#show_title_books_by_barbara ()
+# show_name_authors_more_one_book ()
+show_title_books_more_one_author ()
 
 def tests (): 
     
