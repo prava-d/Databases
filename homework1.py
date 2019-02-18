@@ -61,8 +61,6 @@ class ERModel (object):
 
     def create_relationship_set (self,name,roles,attributes=[]):
 
-        # print(i[1].relationship_keys() for i in self._rmodel)
-
         if name in self.relationship_sets():
         	raise Exception ('The relationship set by the given name exists.')
 
