@@ -117,8 +117,8 @@ class EntitySet (object):
     def delete_entity (self,key):
 
         for i in range(len(self._entityset)):
-          if _entityset[i] == key:
-            del _entityset[i]
+          if self._entityset[i].primary_key() == key:
+            del self._entityset[i]
             return
 
         raise Exception('There is no entity corresponding to that key.')
@@ -159,16 +159,8 @@ class RelationshipSet (object):
 
     def create_relationship (self,role_keys,attributes={}):
 
-        # print(role_keys)
-        # print(self.relationship_keys())
-
         if role_keys in self.relationship_keys():
         	raise Exception ('The relationship with that primary key already exists')
-
-            # print(x)
-            # print(self.relationship_keys())
-            # if key in self.relationship_keys():
-                # raise Exception ('The relationship with that primary key already exists')
 
         self._relationshipset.append(Relationship(role_keys, attributes))
 
@@ -184,10 +176,9 @@ class RelationshipSet (object):
     def delete_relationship (self,pkey):
 
         for i in range(len(self._relationshipset)):
-        	for key, value in self._relationshipset[i][0].items():
-        		if pkey == value:
-        			del self._relationshipset[i]
-        			return
+            if self._relationshipset[i].primary_key() == pkey:
+                del self._relationshipset[i]
+                return
 
         raise Exception ('The relationship with that primary key does not exist')
 
@@ -500,41 +491,3 @@ def tests ():
     
     print("----------------------------------------")
     show_title_books_more_one_author()
-
-
-# c = sample_entities_model()
-# for pk in c.read_entity_set("Persons").entity_keys():
-#     print(c.read_entity_set("Persons").read_entity(pk))
-
-# c = sample_relationships_model()
-
-# t = ERModel()
-# t.create_entity_set("E1",["a","b","c"],["a","b"])
-# t.read_entity_set("E1").create_entity({"a":100,"b":200,"c":300})
-# print(t.read_entity_set("E1").read_entity({"a":100,"b":200}))
-# t.create_entity_set("E2",["x","y","c"],["x","y"])
-# t.read_entity_set("E2").create_entity({"x":1,"y":2,"z":3})
-# print(t.read_entity_set("E2").read_entity({"x":1,"y":2}))
-# t.create_relationship_set("R",{"role1":"E1","role2":"E2"},["n"])
-# # t.create_relationship_set("R",{"role1":"E1","role2":"E2"},["n"])
-# # t.create_relationship_set("R",{"role1":"E1","role2":"E2"},["n"])
-# t.read_relationship_set("R").create_relationship({"role1":{"a":100,"b":200}, "role2": {"x":1,"y":2}},{"n":42})
-# t.read_relationship_set("R").read_relationship({"role1":{"a":100,"b":200},"role2":{"x":1,"y":2}}).attribute("n")
-# t.read_relationship_set("R").read_relationship({"role1":{"a":100,"b":200},"role2":{"x":1,"y":2}}).primary_key()
-# print(t.read_relationship_set("R").read_relationship({"role1":{"a":100,"b":200},"role2":{"x":1,"y":2}}).attribute("n"))
-# print(t.read_relationship_set("R").read_relationship({"role1":{"a":100,"b":200},"role2":{"x":1,"y":2}}).primary_key())
-# print(t.read_relationship_set("R").read_relationship({"role1":{"a":100,"b":200},"role2":{"x":1,"y":2}}))
-
-# t = ERModel()
-# t.create_entity_set("Test",["a","b","c"],["a","b"])
-# t.read_entity_set("Test").create_entity({"a":100,"b":200,"c":300})
-# t.read_entity_set("Test").read_entity({"a":100,"b":200}).attribute("a")
-# print(t.read_entity_set("Test").read_entity({"a":100,"b":200}).attribute("a"))
-# t.read_entity_set("Test").read_entity({"a":100,"b":200}).attribute("b")
-# print(t.read_entity_set("Test").read_entity({"a":100,"b":200}).attribute("b"))
-# t.read_entity_set("Test").read_entity({"a":100,"b":200}).attribute("c")
-# print(t.read_entity_set("Test").read_entity({"a":100,"b":200}).attribute("c"))
-# print(t.read_entity_set("Test").read_entity({"a":100,"b":200}).primary_key())
-# print(t.read_entity_set("Test").read_entity({"a":100,"b":200}))
-
-# tests ()
