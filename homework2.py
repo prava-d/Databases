@@ -63,17 +63,46 @@ class Relation:
 
     def create_tuple (self,tup):
 
-        pass
+        for pkey in self._primary_key:
+          for onetup in self._tuples:
+            if tup[self._columns.index(pkey)] == onetup[self._columns.index(pkey)]:
+              raise Exception ('The input tuple conflicts with an existing primary key.')
+
+        if len(self._columns) != len(tup):
+          raise Exception ('The input tuple is not of the right size.')
+        else:
+          self._tuples.add(tup)
 
 
     def read_tuple (self,pkey):
 
-        pass
+        flag = 0
+
+        for onetup in self._tuples:
+          if set(pkey).issubset(onetup):
+            flag = 1
+            rettup = onetup
+
+        if not flag:
+          raise Exception ('The tuple with those primary keys does not exist.')
+
+        return rettup
 
 
     def delete_tuple (self,pkey):
 
-        pass
+        flag = 0
+
+        for onetup in self._tuples:
+          if set(pkey).issubset(onetup):
+            flag = 1
+            deltup = onetup
+
+        if not flag:
+          raise Exception ('The tuple with those primary keys does not exist.')
+        else:
+          self._tuples.remove(deltup)
+
 
 
     ########################################
@@ -81,6 +110,12 @@ class Relation:
     ########################################
 
     def project (self,names):
+
+        # tuplist = []
+
+        # for onetup in self._tuples:
+        #   for name in names:
+        #     onetup[self._columns.index(name)]
 
         pass
 
