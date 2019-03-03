@@ -94,7 +94,7 @@ class Relation:
 
     def max (self, attr):
 
-        bool first = 1
+        first = 1
         retmax = 0
 
         for onetup in self._tuples:
@@ -138,17 +138,33 @@ class Relation:
           self._tuples.add(tup)
 
 
-# need to add             if tup[self._columns.index(pkey)] == onetup[self._columns.index(pkey)]:
-# to the other lines to make sure the order matches up
-
     def read_tuple (self,pkey):
 
-        flag = 0
+    	indices = []
+    	flag = 0
+    	rettup = ()
 
-        for onetup in self._tuples:
-          if set(pkey).issubset(onetup):
-            flag = 1
-            rettup = onetup
+    	for pkeyname in self._primary_key:
+    	  indices.append(self._columns.index(pkeyname))
+
+	    for onetup in self._tuples:
+	      for idx in indices:
+	      	if onetup[idx] == pkey[indices.index(idx)]:
+	      		flag = 1
+      		else:
+      			flag = 0
+		  if flag:
+		  	rettup = onetup
+		  	break
+
+
+
+        # flag = 0
+
+        # for onetup in self._tuples:
+          # if set(pkey).issubset(onetup):
+            # flag = 1
+            # rettup = onetup
 
         if not flag:
           raise Exception ('The tuple with those primary keys does not exist.')
@@ -158,12 +174,29 @@ class Relation:
 
     def delete_tuple (self,pkey):
 
-        flag = 0
+    	indices = []
+    	flag = 0
+    	deltup = ()
 
-        for onetup in self._tuples:
-          if set(pkey).issubset(onetup):
-            flag = 1
-            deltup = onetup
+    	for pkeyname in self._primary_key:
+    	  indices.append(self._columns.index(pkeyname))
+
+	    for onetup in self._tuples:
+	      for idx in indices:
+	      	if onetup[idx] == pkey[indices.index(idx)]:
+	      		flag = 1
+      		else:
+      			flag = 0
+		  if flag:
+		  	deltup = onetup
+		  	break
+
+        # flag = 0
+
+        # for onetup in self._tuples:
+        #   if set(pkey).issubset(onetup):
+        #     flag = 1
+        #     deltup = onetup
 
         if not flag:
           raise Exception ('The tuple with those primary keys does not exist.')
