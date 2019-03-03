@@ -34,6 +34,7 @@ class Relation:
         self._columns = columns
         self._primary_key = primary_key
         self._tuples = set(tuples)
+        self._attributes = {}
 
     def __repr__ (self):
 
@@ -56,6 +57,69 @@ class Relation:
 
         return self._tuples
 
+    def aggregate (self, aggr):
+
+    	values = []
+
+    	for ag in aggr:
+    		if (ag[1] == "sum"):
+    			values.append(self.sum(ag[2]))
+			elif (ag[1] == "count"):
+				values.append(self.count(ag[2]))
+			elif (ag[1] == "avg"):
+				values.append(self.avg(ag[2]))
+			elif (ag[1] == "max"):
+				values.append(self.max(ag[2]))
+			elif (ag[1] == "min"):
+				values.append(self.min(ag[2]))
+
+		return Relation([i[0] for i in aggr], [], values)
+
+    def sum (self, attr):
+
+        retsum = 0
+
+        for onetup in self._tuples:
+            retsum = retsum + onetup[self._columns.index(attr)]
+
+        return retsum
+
+    def count (self):
+
+        return length(self._tuples)
+
+    def avg (self, attr):
+
+        return (self.sum(attr) / self.count())
+
+    def max (self, attr):
+
+        bool first = 1
+        retmax = 0
+
+        for onetup in self._tuples:
+        	if (first):
+        		retmax = onetup[self._columns.index(attr)]
+        		bool first = 0
+        	if (onetup[self._columns.index(attr)] > retmax):
+        		retmax = onetup[self._columns.index(attr)]
+
+		return retmax
+
+    def min (self, attr):
+
+        bool first = 1
+        retmin = 0
+
+        for onetup in self._tuples:
+        	if (first):
+        		retmin = onetup[self._columns.index(attr)]
+        		bool first = 0
+        	if (onetup[self._columns.index(attr)] > retmax):
+        		retmin = onetup[self._columns.index(attr)]
+
+		return retmin
+
 
     ########################################
     # LOW-LEVEL CRUD OPERATIONS
@@ -73,6 +137,9 @@ class Relation:
         else:
           self._tuples.add(tup)
 
+
+# need to add             if tup[self._columns.index(pkey)] == onetup[self._columns.index(pkey)]:
+# to the other lines to make sure the order matches up
 
     def read_tuple (self,pkey):
 
