@@ -3,11 +3,11 @@
 # HOMEWORK 2
 #
 # Due: Sun 3/3/19 23h59.
-# 
-# Name: 
-# 
+#
+# Name:
+#
 # Email:
-# 
+#
 # Remarks, if any:
 #
 #
@@ -111,40 +111,86 @@ class Relation:
 
     def project (self,names):
 
-        # tuplist = []
+        indicies = []
+        primaryKeyExists = True
+        for name in names:
+                if name not in self._primary_key:
+                    primaryKeyExists = False
+                if name not in self._columns:
+                    raise Exception ('An atrribute name specified does not exist')
+                else:
+                    indicies.append(self._columns.index(name))
+        tupleSet = set()
+        for tup in self._tuples:
+           newTuple = []
+           for index in indicies:
+               newTuple.append(tup[index])
+           tupleSet.add(tuple(newTuple))
 
-        # for onetup in self._tuples:
-        #   for name in names:
-        #     onetup[self._columns.index(name)]
-
-        pass
+        if primaryKeyExists:
+            return Relation(names,names,tupleSet)
+        else:
+            return Relation(names,[],tupleSet)
 
 
     def select (self,pred):
 
-        pass
+        output = set()
 
+        for tup in self._tuples:
+          dict = {}
+          for i in range(len(tup)):
+            dict[self._columns[i]] = tup[i]
+            print(dict)
+          if (pred(dict)):
+                output.add(tup)
+
+        return Relation(self._columns,self._primary_key,output)
 
     def union (self,rel):
 
-        pass
+        if self._columns != rel._columns:
+            raise Exception ('Atrributes do not match')
 
+        if self._primary_key != rel._primary_key:
+            raise Exception ('Primary keys do not match')
+
+        return Relation(rel._columns, rel._primary_key, (rel._tuples).union(self._tuples))
 
     def rename (self,rlist):
+        attributes = self._columns
+        pkeys = self._primary_key
+        for namePair in rlist:
+         if namePair[0] in attributes:
+            attributes[attributes.index(namePair[0])] = namePair[1]
 
-        pass
+         if namePair[0] in pkeys:
+            pkeys[pkeys.index(namePair[0])] = namePair[1]
 
+        return(Relation(attributes,pkeys,self._tuples))
 
     def product (self,rel):
+        notDisjoint = (any(x in self._columns for x in rel._columns))
 
-        pass
-    
-    
+        if notDisjoint:
+                raise Exception ('Attributes are not disjoint')
 
-    
+        combinedAttributes = self._columns + rel._columns
+        combinedpKeys = self._primary_key + rel._primary_key
+        concatTuples = set()
+
+        for tup1 in self._tuples:
+            for tup2 in rel._tuples:
+                concatTuples.add(tup1+tup2)
+
+        return(Relation(combinedAttributes,combinedpKeys,concatTuples))
+
+
+
+
 BOOKS = Relation(["title","year","numberPages","isbn"],
                   ["isbn"],
-                  [              
+                  [
                       ( "A Distant Mirror", 1972, 677, "0345349571"),
                       ( "The Guns of August", 1962, 511, "034538623X"),
                       ( "Norse Mythology", 2017, 299, "0393356182"),
@@ -163,6 +209,7 @@ BOOKS = Relation(["title","year","numberPages","isbn"],
                       ( "The Poisonwood Bible", 1998, 560, "0060175400")
                       ])
 
+print(BOOKS.select(lambda t : len(t["title"]) > 20 and t["year"] > 2000))
 
 PERSONS = Relation(["firstName", "lastName", "birthYear"],
                    ["lastName"],
@@ -206,7 +253,7 @@ AUTHORED_BY = Relation(["isbn","lastName"],
 
 
 def books_by_Gaiman ():
-    
+
     pass
 
 
