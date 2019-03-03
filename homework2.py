@@ -4,7 +4,7 @@
 #
 # Due: Sun 3/3/19 23h59.
 #
-# Name:
+# Name: 
 #
 # Email:
 #
@@ -141,7 +141,6 @@ class Relation:
           dict = {}
           for i in range(len(tup)):
             dict[self._columns[i]] = tup[i]
-            print(dict)
           if (pred(dict)):
                 output.add(tup)
 
@@ -209,7 +208,7 @@ BOOKS = Relation(["title","year","numberPages","isbn"],
                       ( "The Poisonwood Bible", 1998, 560, "0060175400")
                       ])
 
-print(BOOKS.select(lambda t : len(t["title"]) > 20 and t["year"] > 2000))
+#print(BOOKS.select(lambda t : len(t["title"]) > 20 and t["year"] > 2000))
 
 PERSONS = Relation(["firstName", "lastName", "birthYear"],
                    ["lastName"],
@@ -253,10 +252,23 @@ AUTHORED_BY = Relation(["isbn","lastName"],
 
 
 def books_by_Gaiman ():
+    isbnRelGaiman =  AUTHORED_BY.select(lambda t : t["lastName"] == "Gaiman")
+    isbnRelGaimanProj = isbnRelGaiman.project(["isbn"])
+    renamedRel = isbnRelGaimanProj.rename([("isbn","nisbn")])
+    combined = BOOKS.product(renamedRel)
+    result =  combined.select(lambda t : t["isbn"] == t["nisbn"])
+    return result.project(["title"])
 
-    pass
 
+#print(books_by_Gaiman ())
 
 def authors_with_more_than_600_pages_books ():
+    books = BOOKS.select(lambda t : t["numberPages"] > 600)
+    books = books.rename([("isbn","nisbn")])
+    comb1 = AUTHORED_BY.product(books)
+    filterComb1 = comb1.select(lambda t : t["isbn"] == t["nisbn"])
+    filterComb1 = filterComb1.rename([("lastName","nlastName")])
+    comb2 = PERSONS.product(filterComb1)
+    return comb2.select(lambda t : t["lastName"] == t["nlastName"]).project(["firstName","lastName","title"])
 
-    pass
+#print(authors_with_more_than_600_pages_books ())
