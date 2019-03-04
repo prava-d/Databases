@@ -4,9 +4,9 @@
 #
 # Due: Sun 3/3/19 23h59.
 #
-# Name: 
+# Name: Prava and Athmika
 #
-# Email:
+# Email: prava@students.olin.edu and athmika@students.olin.edu
 #
 # Remarks, if any:
 #
@@ -65,7 +65,7 @@ class Relation:
             if (ag[1] == "sum"):
                 values.append(self.sum(ag[2]))
             elif (ag[1] == "count"):
-                values.append(self.count(ag[2]))
+                values.append(self.count())
             elif (ag[1] == "avg"):
                 values.append(self.avg(ag[2]))
             elif (ag[1] == "max"):
@@ -73,7 +73,7 @@ class Relation:
             elif (ag[1] == "min"):
                 values.append(self.min(ag[2]))
 
-        return Relation([i[0] for i in aggr], [], values)
+        return Relation([i[0] for i in aggr], [], [tuple(values)])
 
     def sum (self, attr):
 
@@ -86,7 +86,7 @@ class Relation:
 
     def count (self):
 
-        return length(self._tuples)
+        return len(self._tuples)
 
     def avg (self, attr):
 
@@ -115,7 +115,7 @@ class Relation:
             if (first):
                 retmin = onetup[self._columns.index(attr)]
                 first = 0
-            if (onetup[self._columns.index(attr)] > retmax):
+            if (onetup[self._columns.index(attr)] < retmin):
                 retmin = onetup[self._columns.index(attr)]
 
         return retmin
@@ -153,18 +153,10 @@ class Relation:
               flag = 1
             else:
               flag = 0
+              break
           if flag:
             rettup = onetup
             break
-
-
-
-        # flag = 0
-
-        # for onetup in self._tuples:
-          # if set(pkey).issubset(onetup):
-            # flag = 1
-            # rettup = onetup
 
         if not flag:
           raise Exception ('The tuple with those primary keys does not exist.')
@@ -187,16 +179,10 @@ class Relation:
                 flag = 1
             else:
                 flag = 0
+                break
           if flag:
             deltup = onetup
             break
-
-        # flag = 0
-
-        # for onetup in self._tuples:
-        #   if set(pkey).issubset(onetup):
-        #     flag = 1
-        #     deltup = onetup
 
         if not flag:
           raise Exception ('The tuple with those primary keys does not exist.')
@@ -308,7 +294,6 @@ BOOKS = Relation(["title","year","numberPages","isbn"],
                       ( "The Poisonwood Bible", 1998, 560, "0060175400")
                       ])
 
-#print(BOOKS.select(lambda t : len(t["title"]) > 20 and t["year"] > 2000))
 
 PERSONS = Relation(["firstName", "lastName", "birthYear"],
                    ["lastName"],
@@ -360,8 +345,6 @@ def books_by_Gaiman ():
     return result.project(["title"])
 
 
-#print(books_by_Gaiman ())
-
 def authors_with_more_than_600_pages_books ():
     books = BOOKS.select(lambda t : t["numberPages"] > 600)
     books = books.rename([("isbn","nisbn")])
@@ -370,5 +353,3 @@ def authors_with_more_than_600_pages_books ():
     filterComb1 = filterComb1.rename([("lastName","nlastName")])
     comb2 = PERSONS.product(filterComb1)
     return comb2.select(lambda t : t["lastName"] == t["nlastName"]).project(["firstName","lastName","title"])
-
-#print(authors_with_more_than_600_pages_books ())
