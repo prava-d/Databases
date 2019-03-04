@@ -59,21 +59,21 @@ class Relation:
 
     def aggregate (self, aggr):
 
-    	values = []
+        values = []
 
-    	for ag in aggr:
-    		if (ag[1] == "sum"):
-    			values.append(self.sum(ag[2]))
-			elif (ag[1] == "count"):
-				values.append(self.count(ag[2]))
-			elif (ag[1] == "avg"):
-				values.append(self.avg(ag[2]))
-			elif (ag[1] == "max"):
-				values.append(self.max(ag[2]))
-			elif (ag[1] == "min"):
-				values.append(self.min(ag[2]))
+        for ag in aggr:
+            if (ag[1] == "sum"):
+                values.append(self.sum(ag[2]))
+            elif (ag[1] == "count"):
+                values.append(self.count(ag[2]))
+            elif (ag[1] == "avg"):
+                values.append(self.avg(ag[2]))
+            elif (ag[1] == "max"):
+                values.append(self.max(ag[2]))
+            elif (ag[1] == "min"):
+                values.append(self.min(ag[2]))
 
-		return Relation([i[0] for i in aggr], [], values)
+        return Relation([i[0] for i in aggr], [], values)
 
     def sum (self, attr):
 
@@ -98,27 +98,27 @@ class Relation:
         retmax = 0
 
         for onetup in self._tuples:
-        	if (first):
-        		retmax = onetup[self._columns.index(attr)]
-        		bool first = 0
-        	if (onetup[self._columns.index(attr)] > retmax):
-        		retmax = onetup[self._columns.index(attr)]
+            if (first):
+                retmax = onetup[self._columns.index(attr)]
+                first = 0
+            if (onetup[self._columns.index(attr)] > retmax):
+                retmax = onetup[self._columns.index(attr)]
 
-		return retmax
+        return retmax
 
     def min (self, attr):
 
-        bool first = 1
+        first = 1
         retmin = 0
 
         for onetup in self._tuples:
-        	if (first):
-        		retmin = onetup[self._columns.index(attr)]
-        		bool first = 0
-        	if (onetup[self._columns.index(attr)] > retmax):
-        		retmin = onetup[self._columns.index(attr)]
+            if (first):
+                retmin = onetup[self._columns.index(attr)]
+                first = 0
+            if (onetup[self._columns.index(attr)] > retmax):
+                retmin = onetup[self._columns.index(attr)]
 
-		return retmin
+        return retmin
 
 
     ########################################
@@ -140,22 +140,22 @@ class Relation:
 
     def read_tuple (self,pkey):
 
-    	indices = []
-    	flag = 0
-    	rettup = ()
+        indices = []
+        flag = 0
+        rettup = ()
 
-    	for pkeyname in self._primary_key:
-    	  indices.append(self._columns.index(pkeyname))
+        for pkeyname in self._primary_key:
+          indices.append(self._columns.index(pkeyname))
 
-	    for onetup in self._tuples:
-	      for idx in indices:
-	      	if onetup[idx] == pkey[indices.index(idx)]:
-	      		flag = 1
-      		else:
-      			flag = 0
-		  if flag:
-		  	rettup = onetup
-		  	break
+        for onetup in self._tuples:
+          for idx in indices:
+            if onetup[idx] == pkey[indices.index(idx)]:
+              flag = 1
+            else:
+              flag = 0
+          if flag:
+            rettup = onetup
+            break
 
 
 
@@ -174,22 +174,22 @@ class Relation:
 
     def delete_tuple (self,pkey):
 
-    	indices = []
-    	flag = 0
-    	deltup = ()
+        indices = []
+        flag = 0
+        deltup = ()
 
-    	for pkeyname in self._primary_key:
-    	  indices.append(self._columns.index(pkeyname))
+        for pkeyname in self._primary_key:
+          indices.append(self._columns.index(pkeyname))
 
-	    for onetup in self._tuples:
-	      for idx in indices:
-	      	if onetup[idx] == pkey[indices.index(idx)]:
-	      		flag = 1
-      		else:
-      			flag = 0
-		  if flag:
-		  	deltup = onetup
-		  	break
+        for onetup in self._tuples:
+          for idx in indices:
+            if onetup[idx] == pkey[indices.index(idx)]:
+                flag = 1
+            else:
+                flag = 0
+          if flag:
+            deltup = onetup
+            break
 
         # flag = 0
 
