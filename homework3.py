@@ -3,11 +3,11 @@
 # HOMEWORK 3
 #
 # Due: Sun 3/17/19 23h59.
-# 
-# Name: 
-# 
+#
+# Name:
+#
 # Email:
-# 
+#
 # Remarks, if any:
 #
 #
@@ -34,6 +34,7 @@ class Relation:
         self._columns = columns
         self._primary_key = primary_key
         self._tuples = set(tuples)
+        self._attributes = {}
 
     def __repr__ (self):
 
@@ -56,60 +57,223 @@ class Relation:
 
         return self._tuples
 
+    def aggregate (self, aggr):
+
+        values = []
+
+        for ag in aggr:
+            if (ag[1] == "sum"):
+                values.append(self.sum(ag[2]))
+            elif (ag[1] == "count"):
+                values.append(self.count())
+            elif (ag[1] == "avg"):
+                values.append(self.avg(ag[2]))
+            elif (ag[1] == "max"):
+                values.append(self.max(ag[2]))
+            elif (ag[1] == "min"):
+                values.append(self.min(ag[2]))
+
+        return Relation([i[0] for i in aggr], [], [tuple(values)])
+
+    def sum (self, attr):
+
+        retsum = 0
+
+        for onetup in self._tuples:
+            retsum = retsum + onetup[self._columns.index(attr)]
+
+        return retsum
+
+    def count (self):
+
+        return len(self._tuples)
+
+    def avg (self, attr):
+
+        return (self.sum(attr) / self.count())
+
+    def max (self, attr):
+
+        first = 1
+        retmax = 0
+
+        for onetup in self._tuples:
+            if (first):
+                retmax = onetup[self._columns.index(attr)]
+                first = 0
+            if (onetup[self._columns.index(attr)] > retmax):
+                retmax = onetup[self._columns.index(attr)]
+
+        return retmax
+
+    def min (self, attr):
+
+        first = 1
+        retmin = 0
+
+        for onetup in self._tuples:
+            if (first):
+                retmin = onetup[self._columns.index(attr)]
+                first = 0
+            if (onetup[self._columns.index(attr)] < retmin):
+                retmin = onetup[self._columns.index(attr)]
+
+        return retmin
+
+
+    ########################################
+    # LOW-LEVEL CRUD OPERATIONS
+    ########################################
 
     def create_tuple (self,tup):
 
-        pass
+        for pkey in self._primary_key:
+          for onetup in self._tuples:
+            if tup[self._columns.index(pkey)] == onetup[self._columns.index(pkey)]:
+              raise Exception ('The input tuple conflicts with an existing primary key.')
 
+        if len(self._columns) != len(tup):
+          raise Exception ('The input tuple is not of the right size.')
+        else:
+          self._tuples.add(tup)
 
     def read_tuple (self,pkey):
 
-        pass
+        indices = []
+        flag = 0
+        rettup = ()
+
+        for pkeyname in self._primary_key:
+          indices.append(self._columns.index(pkeyname))
+
+        for onetup in self._tuples:
+          for idx in indices:
+            if onetup[idx] == pkey[indices.index(idx)]:
+              flag = 1
+            else:
+              flag = 0
+              break
+          if flag:
+            rettup = onetup
+            break
+
+        if not flag:
+          raise Exception ('The tuple with those primary keys does not exist.')
+
+        return rettup
 
 
     def delete_tuple (self,pkey):
 
-        pass
+        indices = []
+        flag = 0
+        deltup = ()
 
+        for pkeyname in self._primary_key:
+          indices.append(self._columns.index(pkeyname))
+
+        for onetup in self._tuples:
+          for idx in indices:
+            if onetup[idx] == pkey[indices.index(idx)]:
+                flag = 1
+            else:
+                flag = 0
+                break
+          if flag:
+            deltup = onetup
+            break
+
+        if not flag:
+          raise Exception ('The tuple with those primary keys does not exist.')
+        else:
+          self._tuples.remove(deltup)
+
+
+
+    ########################################
+    # RELATIONAL ALGEBRA OPERATIONS
+    ########################################
 
     def project (self,names):
 
-        pass
+        indicies = []
+        primaryKeyExists = True
+        for name in names:
+                if name not in self.primary_key():
+                    primaryKeyExists = False
+                if name not in self.columns():
+                    raise Exception ('An atrribute name specified does not exist')
+                else:
+                    indicies.append(self.columns().index(name))
+        tupleSet = set()
+        for tup in self.tuples():
+           newTuple = []
+           for index in indicies:
+               newTuple.append(tup[index])
+           tupleSet.add(tuple(newTuple))
+
+        if primaryKeyExists:
+            return Relation(names,names,tupleSet)
+        else:
+            return Relation(names,[],tupleSet)
 
 
     def select (self,pred):
 
-        pass
+        output = set()
 
+        for tup in self.tuples():
+          dict = {}
+          for i in range(len(tup)):
+            dict[self.columns()[i]] = tup[i]
+          if (pred(dict)):
+                output.add(tup)
+
+        return Relation(self.columns(),self.primary_key(),output)
 
     def union (self,rel):
 
-        pass
+        if self.columns() != rel.columns():
+            raise Exception ('Atrributes do not match')
 
+        if self.primary_key() != rel.primary_key():
+            raise Exception ('Primary keys do not match')
+
+        return Relation(rel.columns(), rel.primary_key(), (rel.tuples()).union(self.tuples()))
 
     def rename (self,rlist):
+        attributes = self.columns()[:]
+        pkeys = self.primary_key()[:]
+        for namePair in rlist:
+         if namePair[0] in attributes:
+            attributes[attributes.index(namePair[0])] = namePair[1]
 
-        pass
+         if namePair[0] in pkeys:
+            pkeys[pkeys.index(namePair[0])] = namePair[1]
 
+        return Relation(attributes,pkeys,self.tuples())
 
     def product (self,rel):
+        notDisjoint = (any(x in self.columns()[:] for x in rel.columns()[:]))
 
-        pass
+        if notDisjoint:
+                raise Exception ('Attributes are not disjoint')
 
-    
-    def aggregate (self,aggr):
+        combinedAttributes = self.columns()[:] + rel.columns()[:]
+        combinedpKeys = self.primary_key()[:] + rel.primary_key()[:]
+        concatTuples = set()
 
-        pass
+        for tup1 in self.tuples():
+            for tup2 in rel.tuples():
+                concatTuples.add(tup1+tup2)
 
-    
-    def aggregateByGroup (self,aggr,groupBy):
+        return(Relation(combinedAttributes,combinedpKeys,concatTuples))
 
-        pass
 
-    
+
 BOOKS = Relation(["title","year","numberPages","isbn"],
                   ["isbn"],
-                  [              
+                  [
                       ( "A Distant Mirror", 1972, 677, "0345349571"),
                       ( "The Guns of August", 1962, 511, "034538623X"),
                       ( "Norse Mythology", 2017, 299, "0393356182"),
@@ -169,13 +333,75 @@ AUTHORED_BY = Relation(["isbn","lastName"],
                            ( "0060175400" , "Kingsolver")
                        ])
 
+def getName(s):
+    return s[0:s.find('.')]
+
+def getAttribute(s):
+    return s[s.find('.')+1:len(s)]
 
 
 def evaluate_query (query):
+    relNameMapping = {}
 
-    pass
+    for tuple in query["from"]:
+        relNameMapping[tuple[1]] = tuple[0]
+
+    flag = False
+    for command in query["where"]:
+        cond = command[0]
+        arg1 = command[1]
+        arg2 = command[2]
+
+        if (not flag):
+            rel1 = relNameMapping[getName(arg1)]
+            x = []
+            for column in rel1.columns():
+                x.append((column,getName(arg1)+"."+column))
+
+            res = rel1.rename(x)
 
 
+
+
+        if (cond == "n=n"):
+            rel2 = relNameMapping[getName(arg2)]
+            x = []
+            for column in rel2.columns():
+                x.append((column,getName(arg2)+"."+column))
+
+            res2 = rel2.rename(x)
+            res = res2.product(res)
+            res = res.select(lambda t: t[arg1] == t[arg2])
+            flag = True
+
+        elif (cond == "n=v"):
+            res = res.select(lambda t: t[arg1] == arg2)
+            flag = True
+
+        elif (cond == "n>v"):
+            res = res.select(lambda t: t[arg1] > arg2)
+            flag = True
+
+
+
+    projections = []
+
+    for attribute in query["select"]:
+        name = getName(attribute)
+        att = getAttribute(attribute)
+        projections.append(attribute)
+
+    #print(projections)
+    res = res.project(projections)
+
+    return res
+
+#isbnRelGaiman =  AUTHORED_BY.select(lambda t : t["lastName"] == "Gaiman")
+#isbnRelGaimanProj = isbnRelGaiman.project(["isbn"])
+#renamedRel = isbnRelGaimanProj.rename([("isbn","nisbn")])
+#combined = BOOKS.product(renamedRel)
+#result =  combined.select(lambda t : t["isbn"] == t["nisbn"])
+#return result.project(["title"])
 
 def evaluate_query_aggr (query):
 
@@ -187,3 +413,14 @@ def evaluate_query_aggr_group (query):
 
     pass
 
+print(evaluate_query({
+  "select":["a.lastName","b.title"],
+  "from": [(BOOKS,"b"),(AUTHORED_BY,"a")],
+  "where": [("n=n","b.isbn","a.isbn"),("n=v","a.lastName","Gaiman")]
+}))
+
+print(evaluate_query({
+  "select": ["b.title","b.numberPages"],
+  "from": [(BOOKS,"b")],
+  "where": [ ("n>v","b.numberPages",500) ]
+}))
