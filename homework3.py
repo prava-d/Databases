@@ -3,11 +3,11 @@
 # HOMEWORK 3
 #
 # Due: Sun 3/17/19 23h59.
-# 
-# Name: 
-# 
+#
+# Name:
+#
 # Email:
-# 
+#
 # Remarks, if any:
 #
 #
@@ -34,6 +34,7 @@ class Relation:
         self._columns = columns
         self._primary_key = primary_key
         self._tuples = set(tuples)
+        self._attributes = {}
 
     def __repr__ (self):
 
@@ -56,6 +57,10 @@ class Relation:
 
         return self._tuples
 
+
+    ########################################
+    # LOW-LEVEL CRUD OPERATIONS
+    ########################################
 
     # def create_tuple (self,tup):
 
@@ -96,7 +101,7 @@ class Relation:
 
     #     pass
 
-    
+
     # def aggregate (self,aggr):
 
     #     pass
@@ -182,7 +187,6 @@ class Relation:
         else:
           self._tuples.add(tup)
 
-
     def read_tuple (self,pkey):
 
         indices = []
@@ -235,19 +239,24 @@ class Relation:
           self._tuples.remove(deltup)
 
 
+
+    ########################################
+    # RELATIONAL ALGEBRA OPERATIONS
+    ########################################
+
     def project (self,names):
 
         indicies = []
         primaryKeyExists = True
         for name in names:
-                if name not in self._primary_key:
+                if name not in self.primary_key():
                     primaryKeyExists = False
-                if name not in self._columns:
-                    raise Exception ('An atrribute name specified does not exist')
+                if name not in self.columns():
+                    raise Exception ('An attribute name specified does not exist')
                 else:
-                    indicies.append(self._columns.index(name))
+                    indicies.append(self.columns().index(name))
         tupleSet = set()
-        for tup in self._tuples:
+        for tup in self.tuples():
            newTuple = []
            for index in indicies:
                newTuple.append(tup[index])
@@ -263,30 +272,28 @@ class Relation:
 
         output = set()
 
-        for tup in self._tuples:
+        for tup in self.tuples():
           dict = {}
           for i in range(len(tup)):
-            dict[self._columns[i]] = tup[i]
+            dict[self.columns()[i]] = tup[i]
           if (pred(dict)):
                 output.add(tup)
 
-        return Relation(self._columns,self._primary_key,output)
-
+        return Relation(self.columns(),self.primary_key(),output)
 
     def union (self,rel):
 
-        if self._columns != rel._columns:
+        if self.columns() != rel.columns():
             raise Exception ('Atrributes do not match')
 
-        if self._primary_key != rel._primary_key:
+        if self.primary_key() != rel.primary_key():
             raise Exception ('Primary keys do not match')
 
-        return Relation(rel._columns, rel._primary_key, (rel._tuples).union(self._tuples))
-
+        return Relation(rel.columns(), rel.primary_key(), (rel.tuples()).union(self.tuples()))
 
     def rename (self,rlist):
-        attributes = self._columns
-        pkeys = self._primary_key
+        attributes = self.columns()[:]
+        pkeys = self.primary_key()[:]
         for namePair in rlist:
          if namePair[0] in attributes:
             attributes[attributes.index(namePair[0])] = namePair[1]
@@ -294,34 +301,29 @@ class Relation:
          if namePair[0] in pkeys:
             pkeys[pkeys.index(namePair[0])] = namePair[1]
 
-        return(Relation(attributes,pkeys,self._tuples))
-
+        return Relation(attributes,pkeys,self.tuples())
 
     def product (self,rel):
-        notDisjoint = (any(x in self._columns for x in rel._columns))
+        notDisjoint = (any(x in self.columns()[:] for x in rel.columns()[:]))
 
         if notDisjoint:
                 raise Exception ('Attributes are not disjoint')
 
-        combinedAttributes = self._columns + rel._columns
-        combinedpKeys = self._primary_key + rel._primary_key
+        combinedAttributes = self.columns()[:] + rel.columns()[:]
+        combinedpKeys = self.primary_key()[:] + rel.primary_key()[:]
         concatTuples = set()
 
-        for tup1 in self._tuples:
-            for tup2 in rel._tuples:
+        for tup1 in self.tuples():
+            for tup2 in rel.tuples():
                 concatTuples.add(tup1+tup2)
 
         return(Relation(combinedAttributes,combinedpKeys,concatTuples))
 
-    
-    def aggregateByGroup (self,aggr,groupBy):
 
-        pass
 
-    
 BOOKS = Relation(["title","year","numberPages","isbn"],
                   ["isbn"],
-                  [              
+                  [
                       ( "A Distant Mirror", 1972, 677, "0345349571"),
                       ( "The Guns of August", 1962, 511, "034538623X"),
                       ( "Norse Mythology", 2017, 299, "0393356182"),
@@ -381,12 +383,72 @@ AUTHORED_BY = Relation(["isbn","lastName"],
                            ( "0060175400" , "Kingsolver")
                        ])
 
+def getName(s):
+    return s[0:s.find('.')]
+
+def getAttribute(s):
+    return s[s.find('.')+1:len(s)]
 
 
 def evaluate_query (query):
+    relNameMapping = {}
 
-    pass
+    for tuple in query["from"]:
+        relNameMapping[tuple[1]] = tuple[0]
 
+    flag = False
+    for command in query["where"]:
+        cond = command[0]
+        arg1 = command[1]
+        arg2 = command[2]
+
+        if (not flag):
+            rel1 = relNameMapping[getName(arg1)]
+            x = []
+            for column in rel1.columns():
+                x.append((column,getName(arg1)+"."+column))
+
+            res = rel1.rename(x)
+
+        if (cond == "n=n"):
+            rel2 = relNameMapping[getName(arg2)]
+            x = []
+            for column in rel2.columns():
+                x.append((column,getName(arg2)+"."+column))
+
+            res2 = rel2.rename(x)
+            res = res2.product(res)
+            res = res.select(lambda t: t[arg1] == t[arg2])
+            flag = True
+
+        elif (cond == "n=v"):
+            res = res.select(lambda t: t[arg1] == arg2)
+            flag = True
+
+        elif (cond == "n>v"):
+            res = res.select(lambda t: t[arg1] > arg2)
+            flag = True
+
+    projlst = []
+    if not flag:
+        x = []
+        for elem in query["select"]:
+            projlst.append(getAttribute(elem))
+            x.append((getAttribute(elem), elem))
+        rel = ((query["from"])[0])[0]
+        rel1 = rel.project(projlst)
+        res = rel1.rename(x)
+
+    projections = []
+
+    for attribute in query["select"]:
+        name = getName(attribute)
+        att = getAttribute(attribute)
+        projections.append(attribute)
+
+    res = res.project(projections)
+
+    return res
 
 def evaluate_query_aggr (query):
 
@@ -396,7 +458,7 @@ def evaluate_query_aggr (query):
     for triple in selfield:
         sellst.append(triple[2])
 
-    newQuery = {"select": sellist, "from": query["from"], "where": query["where"]}
+    newQuery = {"select": sellst, "from": query["from"], "where": query["where"]}
 
     newRel = evaluate_query(newQuery)
 
@@ -404,6 +466,17 @@ def evaluate_query_aggr (query):
 
     return ret
 
+# print(evaluate_query_aggr({
+#   "select-aggr": [ ("max_pages", "max", "b.numberPages") ],
+#   "from": [ (BOOKS,"b"), (AUTHORED_BY,"a") ],
+#   "where": [ ("n=n", "b.isbn", "a.isbn"), ("n=v", "a.lastName", "Gaiman") ]
+# }))
+
+# print(evaluate_query_aggr({
+#   "select-aggr": [ ("sum_pages", "sum", "b.numberPages"), ("avg_pages", "avg", "b.numberPages") ],
+#   "from": [ (BOOKS,"b") ],
+#   "where": [ ]
+# }))
 
 def evaluate_query_aggr_group (query):
 
@@ -413,7 +486,7 @@ def parseQuery (input):
 
     # parse a string into an abstract query
 
-    # <sql> ::= select <columns> from <tables> (where <conditions>)? 
+    # <sql> ::= select <columns> from <tables> (where <conditions>)?
 
     idChars = pp.alphas+"_*"
 
@@ -439,27 +512,27 @@ def parseQuery (input):
 
     pCONDITION_NEQN = pIDENTIFIER + pp.Word("=") + pIDENTIFIER
     pCONDITION_NEQN.setParseAction(lambda result: ("n=n",result[0],result[2]))
-    
+
     pCONDITION_NEQV1 = pIDENTIFIER + pp.Word("=") + pINTEGER
     pCONDITION_NEQV1.setParseAction(lambda result: ("n=v",result[0],result[2]))
-    
+
     pCONDITION_NEQV2 = pIDENTIFIER + pp.Word("=") + pSTRING
     pCONDITION_NEQV2.setParseAction(lambda result: ("n=v",result[0],result[2]))
-    
+
     pCONDITION_NGEV = pIDENTIFIER + pp.Word(">") + pINTEGER
     pCONDITION_NGEV.setParseAction(lambda result: ("n>v",result[0],result[2]))
-    
+
     pCONDITION = pCONDITION_NEQV1 | pCONDITION_NEQV2 | pCONDITION_NEQN | pCONDITION_NGEV
 
     pANDCONDITION = pKEYWORD("and") + pCONDITION
-    
+
     pCONDITIONS = pp.Group(pCONDITION + pp.ZeroOrMore( pANDCONDITION))
 
     pWHERE = pp.Optional(pKEYWORD("where") + pCONDITIONS )
 
     pSQL = pSELECT + pFROM + pWHERE + pp.StringEnd()
     pSQL.setParseAction(lambda result: { "select": result[0].asList(),
-                                         "from": result[1].asList(), 
+                                         "from": result[1].asList(),
                                          "where": result[2].asList() if len(result)>2 else []})
 
 
@@ -493,14 +566,15 @@ def convert_abstract_query (db,aq):
 def shell (db):
     # Repeatedly read a line of input, parse it, and evaluate the result
 
-    test = input("Enter your query: ")
+    while True:
+    	test = input("Enter your query: ")
+    	print(parseQuery(test))
+    	res = evaluate_query(convert_abstract_query(db, parseQuery(test)))
+    	print(res)
 
-    print(parseQuery(test))
-
-
-    # print(test)
 
 shell(sample_db)
 
 
+pass
 
