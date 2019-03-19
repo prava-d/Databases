@@ -57,49 +57,261 @@ class Relation:
         return self._tuples
 
 
+    # def create_tuple (self,tup):
+
+    #     pass
+
+
+    # def read_tuple (self,pkey):
+
+    #     pass
+
+
+    # def delete_tuple (self,pkey):
+
+    #     pass
+
+
+    # def project (self,names):
+
+    #     pass
+
+
+    # def select (self,pred):
+
+    #     pass
+
+
+    # def union (self,rel):
+
+    #     pass
+
+
+    # def rename (self,rlist):
+
+    #     pass
+
+
+    # def product (self,rel):
+
+    #     pass
+
+    
+    # def aggregate (self,aggr):
+
+    #     pass
+
+    def aggregate (self, aggr):
+
+        values = []
+
+        for ag in aggr:
+            if (ag[1] == "sum"):
+                values.append(self.sum(ag[2]))
+            elif (ag[1] == "count"):
+                values.append(self.count())
+            elif (ag[1] == "avg"):
+                values.append(self.avg(ag[2]))
+            elif (ag[1] == "max"):
+                values.append(self.max(ag[2]))
+            elif (ag[1] == "min"):
+                values.append(self.min(ag[2]))
+
+        return Relation([i[0] for i in aggr], [], [tuple(values)])
+
+
+    def sum (self, attr):
+
+        retsum = 0
+
+        for onetup in self._tuples:
+            retsum = retsum + onetup[self._columns.index(attr)]
+
+        return retsum
+
+
+    def count (self):
+
+        return len(self._tuples)
+
+
+    def avg (self, attr):
+
+        return (self.sum(attr) / self.count())
+
+
+    def max (self, attr):
+
+        first = 1
+        retmax = 0
+
+        for onetup in self._tuples:
+            if (first):
+                retmax = onetup[self._columns.index(attr)]
+                first = 0
+            if (onetup[self._columns.index(attr)] > retmax):
+                retmax = onetup[self._columns.index(attr)]
+
+        return retmax
+
+
+    def min (self, attr):
+
+        first = 1
+        retmin = 0
+
+        for onetup in self._tuples:
+            if (first):
+                retmin = onetup[self._columns.index(attr)]
+                first = 0
+            if (onetup[self._columns.index(attr)] < retmin):
+                retmin = onetup[self._columns.index(attr)]
+
+        return retmin
+
+
     def create_tuple (self,tup):
 
-        pass
+        for pkey in self._primary_key:
+          for onetup in self._tuples:
+            if tup[self._columns.index(pkey)] == onetup[self._columns.index(pkey)]:
+              raise Exception ('The input tuple conflicts with an existing primary key.')
+
+        if len(self._columns) != len(tup):
+          raise Exception ('The input tuple is not of the right size.')
+        else:
+          self._tuples.add(tup)
 
 
     def read_tuple (self,pkey):
 
-        pass
+        indices = []
+        flag = 0
+        rettup = ()
+
+        for pkeyname in self._primary_key:
+          indices.append(self._columns.index(pkeyname))
+
+        for onetup in self._tuples:
+          for idx in indices:
+            if onetup[idx] == pkey[indices.index(idx)]:
+              flag = 1
+            else:
+              flag = 0
+              break
+          if flag:
+            rettup = onetup
+            break
+
+        if not flag:
+          raise Exception ('The tuple with those primary keys does not exist.')
+
+        return rettup
 
 
     def delete_tuple (self,pkey):
 
-        pass
+        indices = []
+        flag = 0
+        deltup = ()
+
+        for pkeyname in self._primary_key:
+          indices.append(self._columns.index(pkeyname))
+
+        for onetup in self._tuples:
+          for idx in indices:
+            if onetup[idx] == pkey[indices.index(idx)]:
+                flag = 1
+            else:
+                flag = 0
+                break
+          if flag:
+            deltup = onetup
+            break
+
+        if not flag:
+          raise Exception ('The tuple with those primary keys does not exist.')
+        else:
+          self._tuples.remove(deltup)
 
 
     def project (self,names):
 
-        pass
+        indicies = []
+        primaryKeyExists = True
+        for name in names:
+                if name not in self._primary_key:
+                    primaryKeyExists = False
+                if name not in self._columns:
+                    raise Exception ('An atrribute name specified does not exist')
+                else:
+                    indicies.append(self._columns.index(name))
+        tupleSet = set()
+        for tup in self._tuples:
+           newTuple = []
+           for index in indicies:
+               newTuple.append(tup[index])
+           tupleSet.add(tuple(newTuple))
+
+        if primaryKeyExists:
+            return Relation(names,names,tupleSet)
+        else:
+            return Relation(names,[],tupleSet)
 
 
     def select (self,pred):
 
-        pass
+        output = set()
+
+        for tup in self._tuples:
+          dict = {}
+          for i in range(len(tup)):
+            dict[self._columns[i]] = tup[i]
+          if (pred(dict)):
+                output.add(tup)
+
+        return Relation(self._columns,self._primary_key,output)
 
 
     def union (self,rel):
 
-        pass
+        if self._columns != rel._columns:
+            raise Exception ('Atrributes do not match')
+
+        if self._primary_key != rel._primary_key:
+            raise Exception ('Primary keys do not match')
+
+        return Relation(rel._columns, rel._primary_key, (rel._tuples).union(self._tuples))
 
 
     def rename (self,rlist):
+        attributes = self._columns
+        pkeys = self._primary_key
+        for namePair in rlist:
+         if namePair[0] in attributes:
+            attributes[attributes.index(namePair[0])] = namePair[1]
 
-        pass
+         if namePair[0] in pkeys:
+            pkeys[pkeys.index(namePair[0])] = namePair[1]
+
+        return(Relation(attributes,pkeys,self._tuples))
 
 
     def product (self,rel):
+        notDisjoint = (any(x in self._columns for x in rel._columns))
 
-        pass
+        if notDisjoint:
+                raise Exception ('Attributes are not disjoint')
 
-    
-    def aggregate (self,aggr):
+        combinedAttributes = self._columns + rel._columns
+        combinedpKeys = self._primary_key + rel._primary_key
+        concatTuples = set()
 
-        pass
+        for tup1 in self._tuples:
+            for tup2 in rel._tuples:
+                concatTuples.add(tup1+tup2)
+
+        return(Relation(combinedAttributes,combinedpKeys,concatTuples))
 
     
     def aggregateByGroup (self,aggr,groupBy):
