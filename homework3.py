@@ -466,6 +466,7 @@ def parseQuery (input):
     result = pSQL.parseString(input)[0]
     return result    # the first element of the result is the expression
 
+# print(parseQuery("select b.title from AuthoredBy a, Books b where b.isbn = a.isbn and a.lastName = 'Tuchman'"))
 
 sample_db = {
     "Books": BOOKS,
@@ -492,4 +493,14 @@ def convert_abstract_query (db,aq):
 def shell (db):
     # Repeatedly read a line of input, parse it, and evaluate the result
 
-    pass
+    test = input("Enter your query: ")
+
+    print(parseQuery(test))
+
+
+    # print(test)
+
+shell(sample_db)
+
+
+
