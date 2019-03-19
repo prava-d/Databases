@@ -388,11 +388,21 @@ def evaluate_query (query):
     pass
 
 
-
 def evaluate_query_aggr (query):
 
-    pass
+    selfield = query["select-aggr"]
+    sellst = []
 
+    for triple in selfield:
+        sellst.append(triple[2])
+
+    newQuery = {"select": sellist, "from": query["from"], "where": query["where"]}
+
+    newRel = evaluate_query(newQuery)
+
+    ret = newRel.aggregate(query["select-aggr"])
+
+    return ret
 
 
 def evaluate_query_aggr_group (query):
