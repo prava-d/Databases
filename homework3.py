@@ -459,7 +459,7 @@ def evaluate_query_aggr (query):
 
     newRel = evaluate_query({"select": sellst, "from": query["from"], "where": query["where"]})
     ret = newRel.aggregate(query["select-aggr"])
-    
+
     return ret
 
 # print(evaluate_query_aggr({
@@ -555,18 +555,32 @@ def convert_abstract_query (db,aq):
 
 # print(convert_abstract_query(sample_db,{ "select": ["a.lastName", "b.title"], "from": [ ("Books","b"), ("AuthoredBy","a") ], "where": [ ("n=n", "b.isbn", "a.isbn"), ("n=v", "a.lastName", "Gaiman")] }))
 
+def getRelName(s):
+    return s[0:s.find(':')]
+
+def getRel(s):
+    return s[s.find(':')+2:len(s)]
+
 def shell (db):
     # Repeatedly read a line of input, parse it, and evaluate the result
 
     while True:
-    	test = input("Enter your query: ")
-    	print(parseQuery(test))
-    	res = evaluate_query(convert_abstract_query(db, parseQuery(test)))
-    	print(res)
+
+        userinput = input("Enter your query: ")
+
+        if ((userinput.find(':')) == -1):
+            flag = False
+            queryin = userinput
+        else:
+            flag = True
+            queryin = getRel(userinput)
+        
+        res = evaluate_query(convert_abstract_query(db, parseQuery(queryin)))
+        print(res)
+
+        if flag:
+            sample_db[getRelName(userinput)] = res
 
 
 shell(sample_db)
-
-
-pass
 
