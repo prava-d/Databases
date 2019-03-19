@@ -57,69 +57,6 @@ class Relation:
 
         return self._tuples
 
-    def aggregate (self, aggr):
-
-        values = []
-
-        for ag in aggr:
-            if (ag[1] == "sum"):
-                values.append(self.sum(ag[2]))
-            elif (ag[1] == "count"):
-                values.append(self.count())
-            elif (ag[1] == "avg"):
-                values.append(self.avg(ag[2]))
-            elif (ag[1] == "max"):
-                values.append(self.max(ag[2]))
-            elif (ag[1] == "min"):
-                values.append(self.min(ag[2]))
-
-        return Relation([i[0] for i in aggr], [], [tuple(values)])
-
-    def sum (self, attr):
-
-        retsum = 0
-
-        for onetup in self._tuples:
-            retsum = retsum + onetup[self._columns.index(attr)]
-
-        return retsum
-
-    def count (self):
-
-        return len(self._tuples)
-
-    def avg (self, attr):
-
-        return (self.sum(attr) / self.count())
-
-    def max (self, attr):
-
-        first = 1
-        retmax = 0
-
-        for onetup in self._tuples:
-            if (first):
-                retmax = onetup[self._columns.index(attr)]
-                first = 0
-            if (onetup[self._columns.index(attr)] > retmax):
-                retmax = onetup[self._columns.index(attr)]
-
-        return retmax
-
-    def min (self, attr):
-
-        first = 1
-        retmin = 0
-
-        for onetup in self._tuples:
-            if (first):
-                retmin = onetup[self._columns.index(attr)]
-                first = 0
-            if (onetup[self._columns.index(attr)] < retmin):
-                retmin = onetup[self._columns.index(attr)]
-
-        return retmin
-
 
     ########################################
     # LOW-LEVEL CRUD OPERATIONS
@@ -315,7 +252,7 @@ class Relation:
                 if name not in self.primary_key():
                     primaryKeyExists = False
                 if name not in self.columns():
-                    raise Exception ('An atrribute name specified does not exist')
+                    raise Exception ('An attribute name specified does not exist')
                 else:
                     indicies.append(self.columns().index(name))
         tupleSet = set()
@@ -493,22 +430,22 @@ def evaluate_query (query):
             res = res.select(lambda t: t[arg1] > arg2)
             flag = True
 
-
+    projlst = []
+    if not flag:
+        x = []
+        for elem in query["select"]:
+            projlst.append(getAttribute(elem))
+            x.append((getAttribute(elem), elem))
+        rel = ((query["from"])[0])[0]
+        rel1 = rel.project(projlst)
+        res = rel1.rename(x)
 
     projections = []
 
     for attribute in query["select"]:
         att = getAttribute(attribute)
         projections.append(attribute)
-
-    #print(projections)
-    if (not flag):
-        rel1 = relNameMapping[getName(arg1)]
-        x = []
-        for column in rel1.columns():
-            x.append((column,getName(arg1)+"."+column))
-
-        res = rel1.rename(x)
+        
     res = res.project(projections)
 
     return res
@@ -521,7 +458,7 @@ def evaluate_query_aggr (query):
     for triple in selfield:
         sellst.append(triple[2])
 
-    newQuery = {"select": sellist, "from": query["from"], "where": query["where"]}
+    newQuery = {"select": sellst, "from": query["from"], "where": query["where"]}
 
     newRel = evaluate_query(newQuery)
 
@@ -529,7 +466,17 @@ def evaluate_query_aggr (query):
 
     return ret
 
+# print(evaluate_query_aggr({
+#   "select-aggr": [ ("max_pages", "max", "b.numberPages") ],
+#   "from": [ (BOOKS,"b"), (AUTHORED_BY,"a") ],
+#   "where": [ ("n=n", "b.isbn", "a.isbn"), ("n=v", "a.lastName", "Gaiman") ]
+# }))
 
+# print(evaluate_query_aggr({
+#   "select-aggr": [ ("sum_pages", "sum", "b.numberPages"), ("avg_pages", "avg", "b.numberPages") ],
+#   "from": [ (BOOKS,"b") ],
+#   "where": [ ]
+# }))
 
 def evaluate_query_aggr_group (query):
 
@@ -592,6 +539,7 @@ def parseQuery (input):
     result = pSQL.parseString(input)[0]
     return result    # the first element of the result is the expression
 
+# print(parseQuery("select b.title from AuthoredBy a, Books b where b.isbn = a.isbn and a.lastName = 'Tuchman'"))
 
 sample_db = {
     "Books": BOOKS,
@@ -618,6 +566,7 @@ def convert_abstract_query (db,aq):
 def shell (db):
     # Repeatedly read a line of input, parse it, and evaluate the result
 
+<<<<<<< HEAD
     pass
 
 print(evaluate_query({
@@ -625,3 +574,17 @@ print(evaluate_query({
   "from": [(BOOKS,"b"),(AUTHORED_BY,"a")],
   "where": [ ("n=n","b.isbn","a.isbn"), ("n>v","b.numberPages",500),("n=v","a.lastName","Gaiman")]
 }))
+=======
+    while True:
+    	test = input("Enter your query: ")
+    	print(parseQuery(test))
+    	res = evaluate_query(convert_abstract_query(db, parseQuery(test)))
+    	print(res)
+
+
+shell(sample_db)
+
+
+pass
+
+>>>>>>> 6e9ed7071734c013845e592794235412a3380526
