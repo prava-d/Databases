@@ -25,7 +25,7 @@
 #
 ######################################################################
 
-
+import pyparsing as pp
 
 class Relation:
 
@@ -124,6 +124,119 @@ class Relation:
     ########################################
     # LOW-LEVEL CRUD OPERATIONS
     ########################################
+
+    # def create_tuple (self,tup):
+
+    #     pass
+
+
+    # def read_tuple (self,pkey):
+
+    #     pass
+
+
+    # def delete_tuple (self,pkey):
+
+    #     pass
+
+
+    # def project (self,names):
+
+    #     pass
+
+
+    # def select (self,pred):
+
+    #     pass
+
+
+    # def union (self,rel):
+
+    #     pass
+
+
+    # def rename (self,rlist):
+
+    #     pass
+
+
+    # def product (self,rel):
+
+    #     pass
+
+
+    # def aggregate (self,aggr):
+
+    #     pass
+
+    def aggregate (self, aggr):
+
+        values = []
+
+        for ag in aggr:
+            if (ag[1] == "sum"):
+                values.append(self.sum(ag[2]))
+            elif (ag[1] == "count"):
+                values.append(self.count())
+            elif (ag[1] == "avg"):
+                values.append(self.avg(ag[2]))
+            elif (ag[1] == "max"):
+                values.append(self.max(ag[2]))
+            elif (ag[1] == "min"):
+                values.append(self.min(ag[2]))
+
+        return Relation([i[0] for i in aggr], [], [tuple(values)])
+
+
+    def sum (self, attr):
+
+        retsum = 0
+
+        for onetup in self._tuples:
+            retsum = retsum + onetup[self._columns.index(attr)]
+
+        return retsum
+
+
+    def count (self):
+
+        return len(self._tuples)
+
+
+    def avg (self, attr):
+
+        return (self.sum(attr) / self.count())
+
+
+    def max (self, attr):
+
+        first = 1
+        retmax = 0
+
+        for onetup in self._tuples:
+            if (first):
+                retmax = onetup[self._columns.index(attr)]
+                first = 0
+            if (onetup[self._columns.index(attr)] > retmax):
+                retmax = onetup[self._columns.index(attr)]
+
+        return retmax
+
+
+    def min (self, attr):
+
+        first = 1
+        retmin = 0
+
+        for onetup in self._tuples:
+            if (first):
+                retmin = onetup[self._columns.index(attr)]
+                first = 0
+            if (onetup[self._columns.index(attr)] < retmin):
+                retmin = onetup[self._columns.index(attr)]
+
+        return retmin
+
 
     def create_tuple (self,tup):
 
@@ -396,16 +509,21 @@ def evaluate_query (query):
 
     return res
 
-#isbnRelGaiman =  AUTHORED_BY.select(lambda t : t["lastName"] == "Gaiman")
-#isbnRelGaimanProj = isbnRelGaiman.project(["isbn"])
-#renamedRel = isbnRelGaimanProj.rename([("isbn","nisbn")])
-#combined = BOOKS.product(renamedRel)
-#result =  combined.select(lambda t : t["isbn"] == t["nisbn"])
-#return result.project(["title"])
-
 def evaluate_query_aggr (query):
 
-    pass
+    selfield = query["select-aggr"]
+    sellst = []
+
+    for triple in selfield:
+        sellst.append(triple[2])
+
+    newQuery = {"select": sellist, "from": query["from"], "where": query["where"]}
+
+    newRel = evaluate_query(newQuery)
+
+    ret = newRel.aggregate(query["select-aggr"])
+
+    return ret
 
 
 
@@ -413,14 +531,87 @@ def evaluate_query_aggr_group (query):
 
     pass
 
-print(evaluate_query({
-  "select":["a.lastName","b.title"],
-  "from": [(BOOKS,"b"),(AUTHORED_BY,"a")],
-  "where": [("n=n","b.isbn","a.isbn"),("n=v","a.lastName","Gaiman")]
-}))
+def parseQuery (input):
 
-print(evaluate_query({
-  "select": ["b.title","b.numberPages"],
-  "from": [(BOOKS,"b")],
-  "where": [ ("n>v","b.numberPages",500) ]
-}))
+    # parse a string into an abstract query
+
+    # <sql> ::= select <columns> from <tables> (where <conditions>)?
+
+    idChars = pp.alphas+"_*"
+
+    pIDENTIFIER = pp.Word(idChars, idChars+"0123456789.")
+    pIDENTIFIER.setParseAction(lambda result: result[0])
+
+    pCOMMAIDENT = pp.Suppress(pp.Word(",")) + pIDENTIFIER
+
+    pIDENTIFIER2 = pp.Group(pIDENTIFIER + pIDENTIFIER)
+
+    pCOMMAIDENT2 = pp.Suppress(pp.Word(",")) + pIDENTIFIER2
+
+    pINTEGER = pp.Word("-0123456789","0123456789")
+    pINTEGER.setParseAction(lambda result: int(result[0]))
+
+    pSTRING = pp.QuotedString("'")
+
+    pKEYWORD = lambda w : pp.Suppress(pp.Keyword(w,caseless=True))
+
+    pSELECT = pKEYWORD("select") + pp.Group(pIDENTIFIER + pp.ZeroOrMore( pCOMMAIDENT))
+
+    pFROM = pKEYWORD("from") + pp.Group(pIDENTIFIER2 + pp.ZeroOrMore( pCOMMAIDENT2))
+
+    pCONDITION_NEQN = pIDENTIFIER + pp.Word("=") + pIDENTIFIER
+    pCONDITION_NEQN.setParseAction(lambda result: ("n=n",result[0],result[2]))
+
+    pCONDITION_NEQV1 = pIDENTIFIER + pp.Word("=") + pINTEGER
+    pCONDITION_NEQV1.setParseAction(lambda result: ("n=v",result[0],result[2]))
+
+    pCONDITION_NEQV2 = pIDENTIFIER + pp.Word("=") + pSTRING
+    pCONDITION_NEQV2.setParseAction(lambda result: ("n=v",result[0],result[2]))
+
+    pCONDITION_NGEV = pIDENTIFIER + pp.Word(">") + pINTEGER
+    pCONDITION_NGEV.setParseAction(lambda result: ("n>v",result[0],result[2]))
+
+    pCONDITION = pCONDITION_NEQV1 | pCONDITION_NEQV2 | pCONDITION_NEQN | pCONDITION_NGEV
+
+    pANDCONDITION = pKEYWORD("and") + pCONDITION
+
+    pCONDITIONS = pp.Group(pCONDITION + pp.ZeroOrMore( pANDCONDITION))
+
+    pWHERE = pp.Optional(pKEYWORD("where") + pCONDITIONS )
+
+    pSQL = pSELECT + pFROM + pWHERE + pp.StringEnd()
+    pSQL.setParseAction(lambda result: { "select": result[0].asList(),
+                                         "from": result[1].asList(),
+                                         "where": result[2].asList() if len(result)>2 else []})
+
+
+    result = pSQL.parseString(input)[0]
+    return result    # the first element of the result is the expression
+
+
+sample_db = {
+    "Books": BOOKS,
+    "Persons": PERSONS,
+    "AuthoredBy": AUTHORED_BY
+}
+
+
+def convert_abstract_query (db,aq):
+
+    origFrom = aq["from"]
+    newFrom = []
+
+    for tup in origFrom:
+        temptup = (sample_db[tup[0]], tup[1])
+        newFrom.append(temptup)
+
+    ret = {"select": aq["select"], "from": newFrom, "where": aq["where"]}
+
+    return ret
+
+# print(convert_abstract_query(sample_db,{ "select": ["a.lastName", "b.title"], "from": [ ("Books","b"), ("AuthoredBy","a") ], "where": [ ("n=n", "b.isbn", "a.isbn"), ("n=v", "a.lastName", "Gaiman")] }))
+
+def shell (db):
+    # Repeatedly read a line of input, parse it, and evaluate the result
+
+pass
