@@ -106,24 +106,6 @@ class Relation:
 
     #     pass
 
-    def aggregate (self, aggr):
-
-        values = []
-
-        for ag in aggr:
-            if (ag[1] == "sum"):
-                values.append(self.sum(ag[2]))
-            elif (ag[1] == "count"):
-                values.append(self.count())
-            elif (ag[1] == "avg"):
-                values.append(self.avg(ag[2]))
-            elif (ag[1] == "max"):
-                values.append(self.max(ag[2]))
-            elif (ag[1] == "min"):
-                values.append(self.min(ag[2]))
-
-        return Relation([i[0] for i in aggr], [], [tuple(values)])
-
 
     def sum (self, attr):
 
@@ -174,6 +156,42 @@ class Relation:
 
         return retmin
 
+    def aggregate (self, aggr):
+
+        values = []
+
+        for ag in aggr:
+            if (ag[1] == "sum"):
+                values.append(self.sum(ag[2]))
+            elif (ag[1] == "count"):
+                values.append(self.count())
+            elif (ag[1] == "avg"):
+                values.append(self.avg(ag[2]))
+            elif (ag[1] == "max"):
+                values.append(self.max(ag[2]))
+            elif (ag[1] == "min"):
+                values.append(self.min(ag[2]))
+
+        return Relation([i[0] for i in aggr], [], [tuple(values)])
+
+    def aggregateByGroup (self,aggr,groupBy):
+
+        projlst = []
+
+        for ag in aggr:
+            if ag[2] not in projlst:
+                projlst.append(ag[2])
+
+        for group in groupBy:
+            projlst.append(group)
+
+        newRel = self.project(projlst)
+
+        print(newRel)
+
+        res = newRel.aggregate(aggr)
+
+        return res
 
     def create_tuple (self,tup):
 
@@ -476,7 +494,14 @@ def evaluate_query_aggr (query):
 
 def evaluate_query_aggr_group (query):
 
+    sellst = []
+
+    for triple in query["select-aggr"]:
+        sellst.append(triple[2])
+
     pass
+
+
 
 def parseQuery (input):
 
@@ -575,12 +600,17 @@ def shell (db):
             flag = True
             queryin = getRel(userinput)
         
-        res = evaluate_query(convert_abstract_query(db, parseQuery(queryin)))
+        try:
+            res = evaluate_query(convert_abstract_query(db, parseQuery(queryin)))
+        except:
+            print('Input is not valid. Please try again!')
         print(res)
 
         if flag:
             sample_db[getRelName(userinput)] = res
 
+BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"])
+# print(BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"]))
 
-shell(sample_db)
+# shell(sample_db)
 
