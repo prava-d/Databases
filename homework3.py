@@ -473,10 +473,8 @@ def evaluate_query (query):
 
             res = rel1.rename(x)
 
-
-
-
         if (cond == "n=n"):
+
             rel2 = relNameMapping[getName(arg2)]
             x = []
             for column in rel2.columns():
@@ -500,11 +498,17 @@ def evaluate_query (query):
     projections = []
 
     for attribute in query["select"]:
-        name = getName(attribute)
         att = getAttribute(attribute)
         projections.append(attribute)
 
     #print(projections)
+    if (not flag):
+        rel1 = relNameMapping[getName(arg1)]
+        x = []
+        for column in rel1.columns():
+            x.append((column,getName(arg1)+"."+column))
+
+        res = rel1.rename(x)
     res = res.project(projections)
 
     return res
@@ -614,4 +618,10 @@ def convert_abstract_query (db,aq):
 def shell (db):
     # Repeatedly read a line of input, parse it, and evaluate the result
 
-pass
+    pass
+
+print(evaluate_query({
+  "select": ["b.title","b.numberPages"],
+  "from": [(BOOKS,"b"),(AUTHORED_BY,"a")],
+  "where": [ ("n=n","b.isbn","a.isbn"), ("n>v","b.numberPages",500),("n=v","a.lastName","Gaiman")]
+}))
