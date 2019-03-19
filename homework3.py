@@ -452,18 +452,14 @@ def evaluate_query (query):
 
 def evaluate_query_aggr (query):
 
-    selfield = query["select-aggr"]
     sellst = []
 
-    for triple in selfield:
+    for triple in query["select-aggr"]:
         sellst.append(triple[2])
 
-    newQuery = {"select": sellst, "from": query["from"], "where": query["where"]}
-
-    newRel = evaluate_query(newQuery)
-
+    newRel = evaluate_query({"select": sellst, "from": query["from"], "where": query["where"]})
     ret = newRel.aggregate(query["select-aggr"])
-
+    
     return ret
 
 # print(evaluate_query_aggr({
@@ -550,16 +546,12 @@ sample_db = {
 
 def convert_abstract_query (db,aq):
 
-    origFrom = aq["from"]
     newFrom = []
 
-    for tup in origFrom:
-        temptup = (sample_db[tup[0]], tup[1])
-        newFrom.append(temptup)
+    for tup in aq["from"]:
+        newFrom.append((sample_db[tup[0]], tup[1]))
 
-    ret = {"select": aq["select"], "from": newFrom, "where": aq["where"]}
-
-    return ret
+    return {"select": aq["select"], "from": newFrom, "where": aq["where"]}
 
 # print(convert_abstract_query(sample_db,{ "select": ["a.lastName", "b.title"], "from": [ ("Books","b"), ("AuthoredBy","a") ], "where": [ ("n=n", "b.isbn", "a.isbn"), ("n=v", "a.lastName", "Gaiman")] }))
 
