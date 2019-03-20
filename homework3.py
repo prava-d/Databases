@@ -176,17 +176,6 @@ class Relation:
 
     def aggregateByGroup (self,aggr,groupBy):
 
-        #projlst = []
-
-        #for ag in aggr:
-        #    if ag[2] not in projlst:
-        #        projlst.append(ag[2])
-
-        #for group in groupBy:
-        #    projlst.append(group)
-
-        #newRel = self.project(projlst)
-
         i = 0
         xRel = Relation(groupBy+[i[0] for i in aggr],groupBy,[])
         for attribute in self.columns():
@@ -508,11 +497,24 @@ def evaluate_query_aggr_group (query):
 
     sellst = []
 
+    for attr in query["select"]:
+        sellst.append(attr)
+
     for triple in query["select-aggr"]:
         sellst.append(triple[2])
 
-    pass
+    newRel = evaluate_query({"select": sellst, "from": query["from"], "where": query["where"]})
+    ret = newRel.aggregateByGroup(query["select-aggr"], query["group-by"])
 
+    return ret
+
+
+print(evaluate_query_aggr_group({ "select": ["a.lastName"],
+  "select-aggr": [ ("sum_pages", "sum", "b.numberPages"), ("avg_pages", "avg", "b.numberPages") ],
+  "from": [ (BOOKS,"b"), (AUTHORED_BY, "a") ],
+  "where": [ ("n=n","b.isbn","a.isbn") ],
+  "group-by": ["a.lastName"] 
+}))
 
 
 def parseQuery (input):
@@ -632,4 +634,4 @@ def shell (db):
 # BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"])
 # print(BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"]))
 
-shell(sample_db)
+# shell(sample_db)
