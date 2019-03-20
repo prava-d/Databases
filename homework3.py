@@ -176,22 +176,34 @@ class Relation:
 
     def aggregateByGroup (self,aggr,groupBy):
 
-        projlst = []
+        #projlst = []
 
-        for ag in aggr:
-            if ag[2] not in projlst:
-                projlst.append(ag[2])
+        #for ag in aggr:
+        #    if ag[2] not in projlst:
+        #        projlst.append(ag[2])
 
-        for group in groupBy:
-            projlst.append(group)
+        #for group in groupBy:
+        #    projlst.append(group)
 
-        newRel = self.project(projlst)
+        #newRel = self.project(projlst)
 
-        print(newRel)
+        i = 0
+        xRel = Relation(groupBy+[i[0] for i in aggr],groupBy,[])
+        for attribute in self.columns():
+            if attribute in groupBy:
+                for tuple1 in self.tuples():
+                  temp = self.select(lambda t: t[attribute] == tuple1[i]).aggregate(aggr)
+                  newTup = (attribute)
+                  newSet = set()
+                  for eachTup in temp.tuples():
+                      eachTup = list(eachTup)
+                      eachTup.insert(0, tuple1[i])
+                      eachTup = tuple(eachTup)
+                      newSet.add(eachTup)
+                  xRel = xRel.union(Relation(groupBy+[i[0] for i in aggr],groupBy,newSet))
+            i = i + 1
 
-        res = newRel.aggregate(aggr)
-
-        return res
+        return xRel
 
     def create_tuple (self,tup):
 
@@ -609,7 +621,7 @@ def shell (db):
         if flag:
             sample_db[getRelName(userinput)] = res
 
-BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"])
+print(BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"]))
 # print(BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"]))
 
 # shell(sample_db)
