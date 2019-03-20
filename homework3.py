@@ -589,6 +589,11 @@ def getRel(s):
 def shell (db):
     # Repeatedly read a line of input, parse it, and evaluate the result
 
+    print("Available tables:")
+
+    for table in db:
+    	print ("\t" + table)
+
     while True:
 
         userinput = input("Enter your query: ")
@@ -604,13 +609,16 @@ def shell (db):
             res = evaluate_query(convert_abstract_query(db, parseQuery(queryin)))
         except:
             print('Input is not valid. Please try again!')
+            continue
+
         print(res)
 
         if flag:
             sample_db[getRelName(userinput)] = res
+            print ('Relation ' + getRelName(userinput) + ' created')
 
-BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"])
+# BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"])
 # print(BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"]))
 
-# shell(sample_db)
+shell(sample_db)
 
