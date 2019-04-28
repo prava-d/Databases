@@ -23,7 +23,7 @@
 # own implementation.
 #
 ######################################################################
-
+import math
 class RelationUnsorted:
 
     def __init__ (self, columns, primary_key, tuples=[]):
@@ -133,9 +133,174 @@ class RelationSorted:
         indices = [ self._columns.index(c) for c in self._primary_key ]
         return tuple([ t[i] for i in indices])
 
+    def binary_search(self,file,key,start,end):
+        numBlocks = file.size()
+        mid = int((start+end)/2)
+        print(start,mid,end)
+
+
+        blockSize = file.pull(0).size()
+        blockToPull = math.ceil(mid/blockSize)-1
+        if (mid%blockSize) == 0:
+            tupleToGet = blockSize-1
+        else:
+            tupleToGet = (mid%blockSize)-1
+
+
+        if mid < blockSize:
+            print("wrong")
+            tupleToGet = mid - 1
+            blockToPull = 0
+
+        print("BLOCKTOPULL", blockToPull)
+        print("btuplelockToPull", tupleToGet)
+
+
+        '''if(start == mid and mid == end):
+            block =  file.pull(0)
+            tuple = block.get(0)
+            midPrimary = self.primary_key_of(tuple)
+            if key < midPrimary:
+                print("tr")
+                return 0,0,0,file.pull(0)
+            else:
+                return end,(blockToPull),None,file.pull(numBlocks-1)'''
+
+        if(start > mid):
+             print("inset at beg")
+             return 0,0,0,file.pull(0)
+        elif( mid > end):
+            print("inset at end")
+            block =  file.pull(numBlocks-1)
+            tuple = block.get(self.myLast(block))
+            midPrimary = self.primary_key_of(tuple)
+            if key < midPrimary:
+                return end,(blockToPull),(tupleToGet+1),file.pull(numBlocks-1)
+            else:
+                return end,(blockToPull),None,file.pull(numBlocks-1)
+
+        if (blockToPull >= numBlocks):
+            ("here")
+            return end,(blockToPull),None,file.pull(numBlocks-1)
+        block =  file.pull(blockToPull)
+        tuple = block.get(tupleToGet)
+        midPrimary = self.primary_key_of(tuple)
+
+        if (tupleToGet+1) >= blockSize:
+                if (blockToPull+1 >= numBlocks):
+                    nextTuple = None
+                else:
+                    nextBlock = file.pull(blockToPull+1)
+                    nextTuple = nextBlock.get(0)
+        else:
+            nextTuple = block.get(tupleToGet+1)
+
+        print("tupleToGet", nextTuple)
+        if (nextTuple is None):
+            print("nextisNone")
+            if key > midPrimary:
+                return end,(blockToPull),None,file.pull(numBlocks-1)
+            else:
+                return end,(blockToPull),(tupleToGet),file.pull(numBlocks-1)
+
+        nextPrimary = self.primary_key_of(nextTuple)
+        if (midPrimary < key) and (nextPrimary > key):
+            print("found spot,", tuple)
+            return mid,blockToPull,(tupleToGet+1),block
+        elif midPrimary < key:
+            print("mp",midPrimary)
+            return self.binary_search(file,key,mid+1,end)
+        elif midPrimary > key:
+            print("LEFT HALF")
+            return self.binary_search(file,key,start,mid-1)
+
+    def myLast(self,block):
+        blockSize = block.size()
+
+        i = 0
+        while (block.get(i) is not None):
+            i = i + 1
+            if (i >= blockSize):
+                return i-1
+        return i-1
+
     def create_tuple (self,tup):
 
-        raise Exception("Not implemented")
+        file = self._tuples
+        numBlocks = file.size()
+        key = self.primary_key_of(tup)
+
+        block =  file.pull(numBlocks-1)
+        blockSize = block.size()
+        last =  self.myLast(block)
+
+        if (last == -1 and numBlocks == 1):
+            print("1st")
+            block.append(tup)
+            file.push(0,block)
+            return
+
+        end = (blockSize*(numBlocks-1)) + last + 1
+        mid,midblockIndex,tupleIndex,block = self.binary_search(file,key,1,end)
+        #print(self.binary_search(file,key,1,end))
+        if tupleIndex is None:
+            if (self.myLast(block)+1>=blockSize):
+                file.allocate_block()
+                block = file.pull(numBlocks)
+                block.put(0,tup)
+                file.push(numBlocks,block)
+                return
+            block = file.pull(numBlocks-1)
+            block.put(self.myLast(block)+1,tup)
+            file.push(numBlocks-1,block)
+            return
+
+
+
+        numElementsToShift = end - (mid-1)
+        numShifted = 0
+        prev = tup
+        i = midblockIndex
+
+
+        #if this is the first element
+        print("Out of search, where to insert,", i)
+        print("numElementsToShift", numElementsToShift)
+        print("prev", prev)
+        print("tupleIndex", tupleIndex)
+        while(numShifted <= numElementsToShift):
+            print("here")
+            if tupleIndex >= blockSize:
+                i = i+1
+                if (i>=numBlocks):
+                    file.allocate_block()
+                block = file.pull(i)
+                tupleIndex = 0
+                temp = prev
+                prev = block.get(tupleIndex)
+                block.put(tupleIndex,temp)
+                file.push(i,block)
+                numShifted = numShifted + 1
+                tupleIndex = tupleIndex + 1
+            else:
+                temp = prev
+                prev = block.get(tupleIndex)
+                block.put(tupleIndex,temp)
+                file.push(i,block)
+                numShifted = numShifted + 1
+                tupleIndex = tupleIndex + 1
+
+
+        '''
+        i=mid
+        listTuples = []
+        while(block.get(0) != 0):
+            for j in range(i,blockSize):
+                listTuples.append(block.get(j))
+            block = file.get(i+1)
+            block.put()
+        '''
+
 
     def read_tuple (self,pkey):
 
@@ -422,7 +587,16 @@ class BlockImplementation:
                           ])
 '''
 
-books = RelationUnsorted(["title","year","numberPages","isbn"],["isbn"])
+#books = RelationUnsorted(["title","year","numberPages","isbn"],["isbn"])
+
+'''
+print(books.read_tuple(("0060558121",)))
+print(books.read_tuple(("0307274939",)))
+books.delete_tuple(("0060558121",))
+'''
+books = RelationSorted(["title","year","numberPages","isbn"],["isbn"])
+
+
 books.create_tuple(( "A Distant Mirror", 1972, 677, "0345349571"))
 books.create_tuple(( "The Guns of August", 1962, 511, "034538623X"))
 books.create_tuple(( "Norse Mythology", 2017, 299, "0393356182"))
@@ -430,11 +604,22 @@ books.create_tuple(( "American Gods", 2003, 591, "0060558121"))
 books.create_tuple(( "The Ocean at the End of the Lane", 2013, 181, "0062255655"))
 books.create_tuple(( "Good Omens", 1990, 432, "0060853980"))
 books.create_tuple(( "The American Civil War", 2009, 396, "0307274939"))
-print(books.read_tuple(("0060558121",)))
-print(books.read_tuple(("0307274939",)))
-books.delete_tuple(("0060558121",))
+'''
+books.create_tuple(( "The American Civil War", 2009, 396, 6))
+books.create_tuple(( "The American Civil War", 2009, 396, 4))
+books.create_tuple(( "The American Civil War", 2009, 396, 2.3))
 
+books.create_tuple(( "The American Civil War", 2009, 396, 5))
+
+books.create_tuple(( "The Ocean at the End of the Lane", 2013, 181, "0"))
 print(books._tuples)
+books.create_tuple(( "Good Omens", 1990, 432, "9"))
+books.create_tuple(( "The American Civil War", 2009, 396, "5"))
+'''
+print(books._tuples)
+
+
+
 
 # BOOKS = RelationSorted(["title","year","numberPages","isbn"],
 #                          ["isbn"],
