@@ -252,6 +252,44 @@ class RelationSorted:
             #print("LEFT HALF")
             return self.read_binary_search(file,key,start,mid-1)
 
+    def del_binary_search(self,file,key,start,end):
+        numBlocks = file.size()
+        mid = int((start+end)/2)
+        print(start,mid,end)
+
+        blockSize = file.pull(0).size()
+        blockToPull = math.ceil(mid/blockSize)-1
+
+        if (mid%blockSize) == 0:
+            tupleToGet = blockSize-1
+        else:
+            tupleToGet = (mid%blockSize)-1
+
+        if mid < blockSize:
+            tupleToGet = mid - 1
+            blockToPull = 0
+
+        if(start > mid or mid > end):
+            raise Exception("NOT FOUND")
+
+        if (blockToPull >= numBlocks):
+            raise Exception("NOT FOUND")
+
+        block =  file.pull(blockToPull)
+        tuple = block.get(tupleToGet)
+        midPrimary = self.primary_key_of(tuple)
+        print("midkey",midPrimary)
+        if (midPrimary == key):
+            print("FOUND")
+            return mid,tupleToGet,blockToPull
+        elif midPrimary < key:
+            print("RIGHT HALF",key)
+            return self.del_binary_search(file,key,mid+1,end)
+        elif midPrimary > key:
+            print("LEFT HALF")
+            return self.del_binary_search(file,key,start,mid-1)
+
+
     def myLast(self,block):
         blockSize = block.size()
 
@@ -343,7 +381,49 @@ class RelationSorted:
 
     def delete_tuple (self,pkey):
 
-        raise Exception("Not implemented")
+        file = self._tuples
+        numBlocks = file.size()
+        block =  file.pull(numBlocks-1)
+        blockSize = block.size()
+        last =  self.myLast(block)
+
+        end = (blockSize*(numBlocks-1)) + last + 1
+
+        mid,tupleIndex,blockIndex = self.del_binary_search(file,pkey,1,end)
+        '''if (tupleIndex == 0 and blockIndex == 0):
+            block = file.pull(0)
+            return'''
+        if (tupleIndex == blockSize-1 and blockIndex == numBlocks-1):
+            block = file.pull(numBlocks-1)
+            block.put(blockSize-1,None)
+            file.push(numBlocks-1,block)
+
+        block = file.pull(blockIndex)
+        numElementsToShift = end - (mid-1)
+        numShifted = 0
+        next = block.get(tupleIndex+1)
+        i = blockIndex
+
+        while(numShifted <= numElementsToShift):
+                #print("TEMP: ",temp)
+                if (tupleIndex+1) >= blockSize and i+1 < numBlocks:
+                    print("Here")
+                    i = i + 1
+                    nextBlock = file.pull(i)
+                    tupleIndex = 0
+                    next = nextBlock.get(tupleIndex)
+                    block.put(blockSize-1,next)
+                    file.push(i-1,block)
+                    block = nextBlock
+                else:
+                    next = block.get(tupleIndex+1)
+                    block.put(tupleIndex,next)
+                    file.push(i,block)
+                    tupleIndex = tupleIndex + 1
+
+                numShifted = numShifted + 1
+                #temp = next
+
 
     def statistics (self):
 
@@ -642,21 +722,16 @@ books.create_tuple(( "The Ocean at the End of the Lane", 2013, 181, "0062255655"
 
 print(books.read_tuple(("0060558121",)))
 print(books.read_tuple(("0307274939",)))
-print(books.read_tuple(("034538623X",)))
-#books.read_tuple(("030727xxxx",))
-'''
-books.create_tuple(( "The American Civil War", 2009, 396, 6))
-books.create_tuple(( "The American Civil War", 2009, 396, 4))
-books.create_tuple(( "The American Civil War", 2009, 396, 2.3))
-
-books.create_tuple(( "The American Civil War", 2009, 396, 5))
-
-books.create_tuple(( "The Ocean at the End of the Lane", 2013, 181, "0"))
 print(books._tuples)
-books.create_tuple(( "Good Omens", 1990, 432, "9"))
-books.create_tuple(( "The American Civil War", 2009, 396, "5"))
-'''
+books.delete_tuple(("034538623X",))
+books.delete_tuple(("0393356182",))
+books.delete_tuple(("0060853980",))
+books.delete_tuple(("0307274939",))
+#books.read_tuple(("0307books.delete_tuple(("0393356182",))
+
+
 print(books._tuples)
+
 
 
 
