@@ -509,12 +509,12 @@ def evaluate_query_aggr_group (query):
     return ret
 
 
-print(evaluate_query_aggr_group({ "select": ["a.lastName"],
-  "select-aggr": [ ("sum_pages", "sum", "b.numberPages"), ("avg_pages", "avg", "b.numberPages") ],
-  "from": [ (BOOKS,"b"), (AUTHORED_BY, "a") ],
-  "where": [ ("n=n","b.isbn","a.isbn") ],
-  "group-by": ["a.lastName"] 
-}))
+# print(evaluate_query_aggr_group({ "select": ["a.lastName"],
+#   "select-aggr": [ ("sum_pages", "sum", "b.numberPages"), ("avg_pages", "avg", "b.numberPages") ],
+#   "from": [ (BOOKS,"b"), (AUTHORED_BY, "a") ],
+#   "where": [ ("n=n","b.isbn","a.isbn") ],
+#   "group-by": ["a.lastName"] 
+# }))
 
 
 def parseQuery (input):
