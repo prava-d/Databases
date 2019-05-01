@@ -4,11 +4,11 @@
 #
 # Due: Sun 3/17/19 23h59.
 #
-# Name:
+# Name: Athmika, Prava, Chris
 #
-# Email:
+# Email: asenthilkumar@olin.edu, prava@students.olin.edu, christopher.aring@students.olin.edu
 #
-# Remarks, if any:
+# Remarks, if any: For Part-C of Q4 we followed the instructions provided in the question. 
 #
 #
 ######################################################################
@@ -56,56 +56,6 @@ class Relation:
     def tuples (self):
 
         return self._tuples
-
-
-    ########################################
-    # LOW-LEVEL CRUD OPERATIONS
-    ########################################
-
-    # def create_tuple (self,tup):
-
-    #     pass
-
-
-    # def read_tuple (self,pkey):
-
-    #     pass
-
-
-    # def delete_tuple (self,pkey):
-
-    #     pass
-
-
-    # def project (self,names):
-
-    #     pass
-
-
-    # def select (self,pred):
-
-    #     pass
-
-
-    # def union (self,rel):
-
-    #     pass
-
-
-    # def rename (self,rlist):
-
-    #     pass
-
-
-    # def product (self,rel):
-
-    #     pass
-
-
-    # def aggregate (self,aggr):
-
-    #     pass
-
 
     def sum (self, attr):
 
@@ -481,18 +431,6 @@ def evaluate_query_aggr (query):
 
     return ret
 
-# print(evaluate_query_aggr({
-#   "select-aggr": [ ("max_pages", "max", "b.numberPages") ],
-#   "from": [ (BOOKS,"b"), (AUTHORED_BY,"a") ],
-#   "where": [ ("n=n", "b.isbn", "a.isbn"), ("n=v", "a.lastName", "Gaiman") ]
-# }))
-
-# print(evaluate_query_aggr({
-#   "select-aggr": [ ("sum_pages", "sum", "b.numberPages"), ("avg_pages", "avg", "b.numberPages") ],
-#   "from": [ (BOOKS,"b") ],
-#   "where": [ ]
-# }))
-
 def evaluate_query_aggr_group (query):
 
     sellst = []
@@ -507,15 +445,6 @@ def evaluate_query_aggr_group (query):
     ret = newRel.aggregateByGroup(query["select-aggr"], query["group-by"])
 
     return ret
-
-
-# print(evaluate_query_aggr_group({ "select": ["a.lastName"],
-#   "select-aggr": [ ("sum_pages", "sum", "b.numberPages"), ("avg_pages", "avg", "b.numberPages") ],
-#   "from": [ (BOOKS,"b"), (AUTHORED_BY, "a") ],
-#   "where": [ ("n=n","b.isbn","a.isbn") ],
-#   "group-by": ["a.lastName"] 
-# }))
-
 
 def parseQuery (input):
 
@@ -572,9 +501,8 @@ def parseQuery (input):
 
 
     result = pSQL.parseString(input)[0]
-    return result    # the first element of the result is the expression
+    return result
 
-# print(parseQuery("select b.title from AuthoredBy a, Books b where b.isbn = a.isbn and a.lastName = 'Tuchman'"))
 
 sample_db = {
     "Books": BOOKS,
@@ -592,7 +520,6 @@ def convert_abstract_query (db,aq):
 
     return {"select": aq["select"], "from": newFrom, "where": aq["where"]}
 
-# print(convert_abstract_query(sample_db,{ "select": ["a.lastName", "b.title"], "from": [ ("Books","b"), ("AuthoredBy","a") ], "where": [ ("n=n", "b.isbn", "a.isbn"), ("n=v", "a.lastName", "Gaiman")] }))
 
 def getRelName(s):
     return s[0:s.find(':')]
@@ -631,7 +558,4 @@ def shell (db):
             sample_db[getRelName(userinput)] = res
             print ('Relation ' + getRelName(userinput) + ' created')
 
-# BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"])
-# print(BOOKS.product(AUTHORED_BY.rename([("isbn","isbn'")])).select(lambda t: t["isbn"]==t["isbn'"]).aggregateByGroup([("sum_pages","sum","numberPages"),("count_pages","count","numberPages"),("avg_pages","avg","numberPages"),("max_pages","max","numberPages"),("min_pages","min","numberPages")],["lastName"]))
-
-# shell(sample_db)
+shell(sample_db)
