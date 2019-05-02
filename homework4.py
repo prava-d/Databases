@@ -4,11 +4,13 @@
 #
 # Due: Sun 4/28/19 23h59.
 #
-# Name:
+# Name: Athmika, Chris, Prava
 #
-# Email:
+# Email: athmika@students.olin.edu
 #
-# Remarks, if any:
+# Remarks, if any: Our code could be the slightest bit cleaner
+# but it works (but seems to have some empty blocks)!
+# Also thanks for the extension. :)
 #
 #
 ######################################################################
@@ -61,21 +63,6 @@ class RelationUnsorted:
         block = file.pull(numBlocks)
         block.append(tup)
         file.push(numBlocks,block)
-
-        '''
-        file = self._tuples
-        numBlocks = file.size()
-        lastBlock = file.pull(numBlocks-1)
-        if lastBlock.has_space():
-            lastBlock.append(tup)
-            file.push(numBlocks-1,lastBlock)
-        else:
-            file.allocate_block()
-            lastBlock = file.pull(numBlocks)
-            lastBlock.append(tup)
-            file.push(numBlocks,lastBlock)
-        #self._tuples = file
-        '''
 
     def read_tuple (self,pkey):
         file = self._tuples
@@ -136,8 +123,6 @@ class RelationSorted:
     def binary_search(self,file,key,start,end):
         numBlocks = file.size()
         mid = int((start+end)/2)
-        #print(start,mid,end)
-
 
         blockSize = file.pull(0).size()
         blockToPull = math.ceil(mid/blockSize)-1
@@ -146,30 +131,13 @@ class RelationSorted:
         else:
             tupleToGet = (mid%blockSize)-1
 
-
         if mid < blockSize:
             tupleToGet = mid - 1
             blockToPull = 0
 
-        #print("BLOCKTOPULL", blockToPull)
-        #print("btuplelockToPull", tupleToGet)
-
-
-        '''if(start == mid and mid == end):
-            block =  file.pull(0)
-            tuple = block.get(0)
-            midPrimary = self.primary_key_of(tuple)
-            if key < midPrimary:
-                print("tr")
-                return 0,0,0,file.pull(0)
-            else:
-                return end,(blockToPull),None,file.pull(numBlocks-1)'''
-
         if(start > mid):
-             #print("inset at beg")
              return 0,0,0,file.pull(0)
         elif( mid > end):
-            #print("inset at end")
             block =  file.pull(numBlocks-1)
             tuple = block.get(self.myLast(block))
             midPrimary = self.primary_key_of(tuple)
@@ -194,9 +162,7 @@ class RelationSorted:
         else:
             nextTuple = block.get(tupleToGet+1)
 
-        #print("tupleToGet", nextTuple)
         if (nextTuple is None):
-            #print("nextisNone")
             if key > midPrimary:
                 return end,(blockToPull),None,file.pull(numBlocks-1)
             else:
@@ -204,19 +170,15 @@ class RelationSorted:
 
         nextPrimary = self.primary_key_of(nextTuple)
         if (midPrimary < key) and (nextPrimary > key):
-            #print("found spot,", tuple)
             return mid,blockToPull,(tupleToGet+1),block
         elif midPrimary < key:
-            #print("mp",midPrimary)
             return self.binary_search(file,key,mid+1,end)
         elif midPrimary > key:
-            #print("LEFT HALF")
             return self.binary_search(file,key,start,mid-1)
 
     def read_binary_search(self,file,key,start,end):
         numBlocks = file.size()
         mid = int((start+end)/2)
-        print(start,mid,end)
 
         blockSize = file.pull(0).size()
         blockToPull = math.ceil(mid/blockSize)-1
@@ -229,9 +191,6 @@ class RelationSorted:
             tupleToGet = mid - 1
             blockToPull = 0
 
-        #print("BLOCKTOPULL", blockToPull)
-        #print("btuplelockToPull", tupleToGet)
-
         if(start > mid or mid > end):
             raise Exception("NOT FOUND")
 
@@ -243,13 +202,10 @@ class RelationSorted:
         midPrimary = self.primary_key_of(tuple)
 
         if (midPrimary == key):
-            print("FOUND")
             return tuple
         elif midPrimary < key:
-            #print("RIGHT HALF")
             return self.read_binary_search(file,key,mid+1,end)
         elif midPrimary > key:
-            #print("LEFT HALF")
             return self.read_binary_search(file,key,start,mid-1)
 
     def del_binary_search(self,file,key,start,end):
@@ -278,15 +234,11 @@ class RelationSorted:
         block =  file.pull(blockToPull)
         tuple = block.get(tupleToGet)
         midPrimary = self.primary_key_of(tuple)
-        print("midkey",midPrimary)
         if (midPrimary == key):
-            print("FOUND")
             return mid,tupleToGet,blockToPull
         elif midPrimary < key:
-            print("RIGHT HALF",key)
             return self.del_binary_search(file,key,mid+1,end)
         elif midPrimary > key:
-            print("LEFT HALF")
             return self.del_binary_search(file,key,start,mid-1)
 
 
@@ -311,14 +263,12 @@ class RelationSorted:
         last =  self.myLast(block)
 
         if (last == -1 and numBlocks == 1):
-            #print("1st")
             block.append(tup)
             file.push(0,block)
             return
 
         end = (blockSize*(numBlocks-1)) + last + 1
         mid,midblockIndex,tupleIndex,block = self.binary_search(file,key,1,end)
-        #print(self.binary_search(file,key,1,end))
         if tupleIndex is None:
             if (self.myLast(block)+1>=blockSize):
                 file.allocate_block()
@@ -383,9 +333,6 @@ class RelationSorted:
         end = (blockSize*(numBlocks-1)) + last + 1
 
         mid,tupleIndex,blockIndex = self.del_binary_search(file,pkey,1,end)
-        '''if (tupleIndex == 0 and blockIndex == 0):
-            block = file.pull(0)
-            return'''
         if (tupleIndex == blockSize-1 and blockIndex == numBlocks-1):
             block = file.pull(numBlocks-1)
             block.put(blockSize-1,None)
@@ -393,14 +340,12 @@ class RelationSorted:
 
         block = file.pull(blockIndex)
         numElementsToShift = end - (mid-1)
-        numShifted = 0
+        numShifted = 1
         next = block.get(tupleIndex+1)
         i = blockIndex
 
         while(numShifted <= numElementsToShift):
-                #print("TEMP: ",temp)
                 if (tupleIndex+1) >= blockSize and i+1 < numBlocks:
-                    print("Here")
                     i = i + 1
                     nextBlock = file.pull(i)
                     tupleIndex = 0
@@ -415,7 +360,6 @@ class RelationSorted:
                     tupleIndex = tupleIndex + 1
 
                 numShifted = numShifted + 1
-                #temp = next
 
 
     def statistics (self):
@@ -448,6 +392,44 @@ class RelationIndexed:
         indices = [self._columns.index(c) for c in self._primary_key]
         return tuple([ t[i] for i in indices])
 
+    def delete(self,blockIndex,insPos):
+
+        file = self._tuples
+        numBlocks = file.size()-1 #num blocks with tuples
+        tupleIndex = insPos
+        block =  file.pull(numBlocks-1)
+        blockSize = block.size()
+        last =  self.myLast(block)
+
+        insPos = blockSize*(blockIndex-1) + insPos + 1
+        end = (blockSize*(numBlocks-1)) + last - 1
+
+        block = file.pull(blockIndex)
+        numElementsToShift = end - (insPos-1)
+        numShifted = 1
+        next = block.get(tupleIndex+1)
+        i = blockIndex
+
+        while(numShifted <= numElementsToShift):
+                if (tupleIndex+1) >= blockSize and i+1 < numBlocks:
+                    i = i + 1
+                    nextBlock = file.pull(i)
+                    tupleIndex = 0
+                    next = nextBlock.get(tupleIndex)
+                    block.put(blockSize-1,next)
+                    file.push(i-1,block)
+                    block = nextBlock
+                else:
+                    next = block.get(tupleIndex+1)
+                    block.put(tupleIndex,next)
+                    file.push(i,block)
+                    tupleIndex = tupleIndex + 1
+
+                numShifted = numShifted + 1
+
+        self.delupdateIndex(file,file.pull(0))
+        return
+
     def myLast(self,block):
         blockSize = block.size()
 
@@ -460,21 +442,20 @@ class RelationIndexed:
 
     def insert(self, blockIndex, insPos, tup):
 
-        file = self._tuples[1:]
-        numBlocks = file.size()
-        insPos = blockSize*(numBlocks-1) + 1
-
+        file = self._tuples
+        numBlocks = file.size()-1 #num blocks with tuples
+        tupleIndex = insPos
         block =  file.pull(numBlocks-1)
         blockSize = block.size()
         last =  self.myLast(block)
 
-        end = (blockSize*(numBlocks-1)) + last + 1
-        numElementsToShift = end - (insPos-1)
+        insPos = blockSize*(blockIndex-1) + insPos + 1
+        end = (blockSize*(numBlocks-1)) + last - 1
+        numElementsToShift = end - (insPos)
         numShifted = 0
         prev = tup
         i = blockIndex
         block =  file.pull(blockIndex)
-
         while(numShifted <= numElementsToShift):
             if tupleIndex >= blockSize:
                 i = i+1
@@ -496,6 +477,51 @@ class RelationIndexed:
                 numShifted = numShifted + 1
                 tupleIndex = tupleIndex + 1
 
+    def findPosInTuple(self,block,key):
+        filledBlockSize = self.myLast(block)
+        i = 0
+        while (self.primary_key_of(block.get(i)) < key):
+            print(block)
+            i = i + 1
+            if (i > filledBlockSize):
+                return i
+        return i
+
+    def updateIndex(self,file,firstBlock):
+        #update index
+        newListWithIndices = [] #length of tuple with indices
+        numBlocks = file.size()
+
+        for i in range(1,numBlocks):
+            if (i==1): fkey = self.primary_key_of(file.pull(1).get(0))
+            if file.pull(i).get(0) is not None:
+                temp_p_key = self.primary_key_of(file.pull(i).get(0))
+                newListWithIndices.append(temp_p_key)
+
+
+        firstBlock.put(0,tuple(newListWithIndices))
+        file.push(0,firstBlock)
+        return
+
+    def delupdateIndex(self,file,firstBlock):
+            #update index
+            newListWithIndices = [] #length of tuple with indices
+            numBlocks = file.size()
+
+            if (self.myLast(file.pull(1)) == 0):
+                firstBlock.put(0,tuple(newListWithIndices))
+                file.push(0,firstBlock)
+                return
+
+            for i in range(1,len(firstBlock.get(0))+1):
+                if (i==1): fkey = self.primary_key_of(file.pull(1).get(0))
+                if file.pull(i).get(0) is not None:
+                    temp_p_key = self.primary_key_of(file.pull(i).get(0))
+                    newListWithIndices.append(temp_p_key)
+
+            firstBlock.put(0,tuple(newListWithIndices))
+            file.push(0,firstBlock)
+
     def create_tuple (self,tup):
 
         file = self._tuples
@@ -504,40 +530,44 @@ class RelationIndexed:
         tupleWithIndices = firstBlock.get(0)
         pkey = self.primary_key_of(tup)
 
-
         #If there is no tuple in the first block, create a tuple and insert it to the block
         if tupleWithIndices is None:
             tupleWithIndices = (pkey,)
-            firstBlock.put(tupleWithIndices)
+            firstBlock.put(0,tupleWithIndices)
+            file.allocate_block()
             secondBlock = file.pull(1)
-            file.push(firstBlock)
-            file.push(secondBlock)
+            secondBlock.put(0,tup)
+            file.push(0,firstBlock)
+            file.push(1,secondBlock)
             return
 
         idx = 0 #tuple index
         blockidx = 1 #block index
         finalblockidx = 0
 
-        primaryKeyInIndex = tuplesIndices[idx]
+        primaryKeyInIndex = tupleWithIndices[idx]
+        print(pkey)
 
-        while(primaryKeyInIndex > pkey):
+        while(primaryKeyInIndex < pkey):
             idx = idx + 1
-            blockidx = idx + 1
+            blockidx = blockidx + 1
 
-            if idx >= len(tuplesWithIndices):
-                #The tuple has to be inserted at the last
-                blockidx =  file.size()-1
+            if idx >= len(tupleWithIndices):
+                #The tuple has to be inserted at the last block
+                blockidx =  blockidx -1
                 block = file.pull(blockidx)
-                if block.pull(blockidx).has_space():
-                    #if self.myLast(block) < blockSize - 1:
-                        block.put(self.myLast(block)+1,tuple)
+                if block.has_space():
+                    insPos = self.findPosInTuple(block,pkey)
+                    self.insert(blockidx,insPos,tup)
                 else:
                     file.allocate_block()
                     blockSize += 1
                     block = file.pull(blockidx+1)
-                    file.push(block)
+                    file.push(blockidx+1, block)
+                self.updateIndex(file,firstBlock)
+                return
 
-            primaryKeyInIndex = tuplesIndices[idx]
+            primaryKeyInIndex = tupleWithIndices[idx]
 
         if (primaryKeyInIndex == pkey):
             raise Exception ("Tuple with primary key already exists")
@@ -546,7 +576,7 @@ class RelationIndexed:
         finalblockidx = blockidx - 1
         if (finalblockidx < 1):
             finalblockidx = blockidx
-            self.insert(1,0,tup)
+            self.insert(blockidx,0,tup)
         else:
             prevBlock = file.pull(finalblockidx)
             prevlasttup = prevBlock.get(prevBlock.size() - 1)
@@ -555,18 +585,39 @@ class RelationIndexed:
             if (prevlastpkey < pkey):
                 finalblockidx = blockidx
 
+            block = file.pull(finalblockidx)
+            insPos = self.findPosInTuple(block,pkey)
+            self.insert(finalblockidx,insPos,tup)
+
+        self.updateIndex(file,firstBlock)
+        return
 
     def read_tuple (self,pkey):
         file = self._tuples
-
-        indexBlock = file.pull(0) #supposed to be the first block
+        indexBlock = file.pull(0)
         tuplesWithIndices = indexBlock.get(0)
 
-        for i in range(0, len(tuplesWithIndices)): #for each element of the tuple
-            if tuplesWithIndices[i] == pkey: #if the elemet we are on is == to pkey
-                block.get(i+1) #get the block at index i+1
+        idx = 1
+        for i in range(0, len(tuplesWithIndices)):
+            if (tuplesWithIndices[i] > pkey) or (len(tuplesWithIndices) == 1): #if the elemet we are on is == to pkey
+                if i == 0:
+                    idx = i + 1
+                    break
+                else:
+                    idx = i
+                    break
+            if (i == len(tuplesWithIndices)-1):
+                    idx = i + 1
+                    break
 
-        raise Exception("Not implemented")
+        readBlock = file.pull(idx)
+        for i in range(0, readBlock.size()):
+            readtuple = readBlock.get(i)
+            if self.primary_key_of(readtuple) == pkey:
+                return readtuple
+
+        raise Exception("The data corresponding to that primary key does not exist")
+
 
     def delete_tuple (self,pkey):
 
@@ -576,47 +627,46 @@ class RelationIndexed:
 
         if tuplesWithIndices is None:
             raise Exception("The file is empty")
+
+        if (len(tuplesWithIndices) == 1 and self.myLast(file.pull(1))==0):
+            block = file.pull(1)
+            block.put(0,None)
+            file.push(1, block)
+            self.delupdateIndex(file,file.pull(0))
             return
 
-        if (len(tuplesWithIndices) == 1):
-            # delete tuple
-            return
-
-        blockidx = 0
-        finalblockidx = 0
+        blockidx = 1
 
         for i in range(0, len(tuplesWithIndices)):
-            if (tuplesWithIndices[i] < pkey):
-                if i == 0:
-                    blockidx = i
+            if (tuplesWithIndices[i] > pkey):
+                if i == 0 or (len(tuplesWithIndices) == 1):
+                    blockidx = i + 1
                 else:
-                    blockidx = i - 1
+                    blockidx = i
+                break
+            if (i == len(tuplesWithIndices) - 1):
+                blockidx = i + 1
                 break
 
         deleteBlock = file.pull(blockidx)
 
         deleteidx = 0
+        foundflag = 0
         flag = 0
-        for i in range(0, deleteBlock.size()):
+        for i in range(0, self.myLast(deleteBlock) + 1):
+            print("START", i)
             tup = deleteBlock.get(i)
             thispkey = self.primary_key_of(tup)
             if (thispkey == pkey):
                 deleteidx = i
-                if (deleteidx != deleteBlock.size() - 1):
-                    flag = 1
-            if flag and (i != deleteBlock.size() - 1):
-                deleteBlock.get(i + 1) #set deleteBlock[i] = deleteBlock[i+1]
+                foundflag = 1
+                break
 
+        if not foundflag:
+            raise Exception("The data corresponding to that primary key does not exist")
 
-        # actually delete (done ? above)
-        # shift elements in each block to the left (done for the delete block above)
-        # shift block up one element
-        # update the index tuple
-
-        for i in range(blockidx + 1, len(file)):
-            for k in range(0, )
-
-        raise Exception("Not implemented")
+        self.delete(blockidx,deleteidx)
+        return
 
     def statistics (self):
 
@@ -858,11 +908,42 @@ print(books.read_tuple(("0060558121",)))
 print(books.read_tuple(("0307274939",)))
 books.delete_tuple(("0060558121",))
 '''
-#books = RelationSorted(["title","year","numberPages","isbn"],["isbn"])
+books = RelationSorted(["title","year","numberPages","isbn"],["isbn"])
+
+#
+# books.create_tuple(( "The American Civil War", 2009, 396, "0307274939"))
+# books.create_tuple(( "The Guns of August", 1962, 511, "034538623X"))
+# books.create_tuple(( "Norse Mythology", 2017, 299, "0393356182"))
+# books.create_tuple(( "A Distant Mirror", 1972, 677, "0345349571"))
+# books.create_tuple(( "Good Omens", 1990, 432, "0060853980"))
+#
+# books.create_tuple(( "American Gods", 2003, 591, "0060558121"))
+# books.create_tuple(( "The Ocean at the End of the Lane", 2013, 181, "0062255655"))
+
+# print(books.read_tuple(("0393356182",)))
+# print(books.read_tuple(("0345349571",)))
+# print(books.read_tuple(("0060853980",)))
+# print(books.read_tuple(("0393356182",)))
+#print(books.read_tuple(("0307274939",)))
+# print(books._tuples)
+# books.delete_tuple(("034538623X",))
+# books.delete_tuple(("0393356182",))
+# books.delete_tuple(("0060853980",))
+#books.delete_tuple(("0307274939",))
+#books.delete_tuple(("0345349571",))
+#books.delete_tuple(("0393356182",))
+#books.delete_tuple(("0060853980",))
+#books.delete_tuple(("0307274939",))
+#books.delete_tuple(("0393356182",))
+
+print(books._tuples)
 
 
-'''books.create_tuple(( "The American Civil War", 2009, 396, "0307274939"))
-books.create_tuple(( "A Distant Mirror", 1972, 677, "0345349571"))
+
+
+
+
+'''books.create_tuple(( "A Distant Mirror", 1972, 677, "0345349571"))
 books.create_tuple(( "The Guns of August", 1962, 511, "034538623X"))
 books.create_tuple(( "Norse Mythology", 2017, 299, "0393356182"))
 books.create_tuple(( "Good Omens", 1990, 432, "0060853980"))
@@ -875,8 +956,7 @@ books.delete_tuple(("034538623X",))
 books.delete_tuple(("0393356182",))
 books.delete_tuple(("0060853980",))
 books.delete_tuple(("0307274939",))
-#books.read_tuple(("0307books.delete_tuple(("0393356182",))
-'''
+#books.read_tuple(("0307books.delete_tuple(("0393356182",))'''
 
 
 
@@ -904,7 +984,7 @@ books.delete_tuple(("0307274939",))
 #                              ( "The Poisonwood Bible", 1998, 560, "0060175400")
 #                          ])
 
-BOOKS = RelationIndexed(["title","year","numberPages","isbn"],
+'''BOOKS = RelationIndexed(["title","year","numberPages","isbn"],
                      ["isbn"],
                      [
                          ( "A Distant Mirror", 1972, 677, "0345349571"),
@@ -922,7 +1002,7 @@ BOOKS = RelationIndexed(["title","year","numberPages","isbn"],
                          ( "The War That Ended Peace", 2014, 739, "0812980660"),
                          ( "Sheaves in Geometry and Logic", 1994, 630, "0387977102"),
                          ( "Categories for the Working Mathematician", 1978, 317, "0387984032"),
-                         ( "The Poisonwood Bible", 1998, 560, "0060175400")])
+                         ( "The Poisonwood Bible", 1998, 560, "0060175400")])'''
 
 #books.insert(0,0,( "A Distant Mirror", 1972, 677, "0345349571"))
 #books.create_tuple(( "The American Civil War", 2009, 396, "0307274939"))
