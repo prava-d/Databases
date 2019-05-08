@@ -446,7 +446,6 @@ def evaluate_query_aggr_group (query):
 
     return ret
 
-
 def parseQuery (input):
 
     # parse a string into an abstract query
