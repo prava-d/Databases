@@ -1,5 +1,5 @@
 '''
-B+ Tree implementation . . . or something. I hope.
+B+ Tree implementation
 '''
 
 class BPlusNode:
